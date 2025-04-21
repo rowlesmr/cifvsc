@@ -8,6 +8,7 @@ const path = require("path");
 let tagToSaveframes = new Map();
 let tagToLocations = new Map();
 let tagToFiles = new Map();
+let tagList = []; // This will hold just the tags (keys)
 /**
  * Parses a single CIF dictionary content into a map of tag -> saveframe
  */
@@ -114,6 +115,7 @@ function loadDictionaries(paths, reloadPath = "") {
             remaining--;
             if (remaining == 0) {
                 checkMultipleDefinitions();
+                updateTagList();
             }
         });
     });
@@ -156,6 +158,31 @@ function watchDictionaryFiles() {
         });
         console.log(`Watching file: ${dictPath}`);
     });
+}
+function updateTagList() {
+    // Update the tagList whenever the dictionaries are loaded or updated
+    console.log("Updating tag list.");
+    tagList = Array.from(tagToSaveframes.keys());
+}
+/**
+ * Provides auto-suggestions for CIF tags
+ */
+function provideCifCompletionItems(document, position, token) {
+    // Get the current word at the cursor
+    const currentWord = document.getText(document.getWordRangeAtPosition(position));
+    // Create an array to store completion items
+    let completionItems = [];
+    // Loop over the prebuilt list of tags instead of the map
+    tagList.forEach(tag => {
+        // If the current word is empty or matches the start of a tag, suggest that tag
+        if (!currentWord || tag.startsWith(currentWord)) {
+            const completionItem = new vscode.CompletionItem(tag, vscode.CompletionItemKind.Keyword);
+            completionItem.documentation = new vscode.MarkdownString(`This is the ${tag} tag.`);
+            completionItem.insertText = tag; // What gets inserted when the user selects the suggestion
+            completionItems.push(completionItem);
+        }
+    });
+    return completionItems;
 }
 /**
  * Activates the extension
@@ -208,7 +235,9 @@ function activate(context) {
         
         */
     }
+    //-------------
     //to allow hover text to work
+    //-------------
     const hoverProvider = vscode.languages.registerHoverProvider('cif', {
         provideHover(document, position, token) {
             const range = document.getWordRangeAtPosition(position, /_[\w\d.]+/);
@@ -239,7 +268,9 @@ function activate(context) {
         }
     });
     context.subscriptions.push(hoverProvider);
+    //-------------
     //to allow jump-to-definition to work
+    //-------------
     const definitionProvider = vscode.languages.registerDefinitionProvider('cif', {
         provideDefinition(document, position, token) {
             const range = document.getWordRangeAtPosition(position, /_[\w\d.]+/);
@@ -251,6 +282,14 @@ function activate(context) {
         }
     });
     context.subscriptions.push(definitionProvider);
+    //-------------
+    // Register the completion item provider for the CIF language
+    //-------------
+    const completionProvider = vscode.languages.registerCompletionItemProvider('cif', {
+        provideCompletionItems: provideCifCompletionItems
+    }, '_'); // Trigger on '_' character, adjust this as needed
+    // Add to subscriptions to handle cleanup on deactivation
+    context.subscriptions.push(completionProvider);
 }
 /**
  * Optional: clean up when extension deactivates
