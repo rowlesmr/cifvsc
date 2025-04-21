@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as https from 'https';
 
 
 let tagToSaveframes = new Map<string, string[]>();
@@ -230,6 +231,69 @@ function provideCifCompletionItems(document: vscode.TextDocument, position: vsco
 }
 
 
+function downloadAndSaveDictionaries(context: vscode.ExtensionContext) {
+  // URLs of the raw files on GitHub
+  const urls = [
+  'https://github.com/COMCIFS/cif_core/raw/refs/heads/master/cif_core.dic',
+  'https://github.com/COMCIFS/cif_core/raw/refs/heads/master/ddl.dic',
+  'https://github.com/COMCIFS/cif_core/raw/refs/heads/master/templ_attr.cif',
+  'https://github.com/COMCIFS/cif_core/raw/refs/heads/master/templ_enum.cif',
+  'https://github.com/COMCIFS/Powder_Dictionary/raw/refs/heads/master/cif_pow.dic',
+  'https://github.com/COMCIFS/MultiBlock_Dictionary/raw/refs/heads/main/multi_block_core.dic'
+  ];
+
+  const downloadDir = path.join(context.extensionPath, 'dictionaries'); // Save in a folder under extension's path
+
+  // Create the directory if it doesn't exist
+  if (!fs.existsSync(downloadDir)) {
+    fs.mkdirSync(downloadDir);
+  }
+
+  // Download all files and save them locally
+  Promise.all(urls.map((url, index) => downloadFile(url, downloadDir, `file${index + 1}.cif`)))
+    .then(() => {
+      vscode.window.showInformationMessage(`Default dictionaries downloaded successfully to ${downloadDir}.`);
+      const newDictPaths = urls.map(url => path.join(downloadDir, `file${urls.indexOf(url) + 1}.cif`));
+      vscode.workspace.getConfiguration('cifTools').update('dictionaryPaths', newDictPaths, vscode.ConfigurationTarget.Global);
+    })
+    .catch(err => {
+      vscode.window.showErrorMessage('Error downloading dictionaries: ' + err);
+    });
+}
+
+function downloadFile(url: string, directory: string, filename: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const filePath = path.join(directory, filename);
+
+    // Make a GET request to the URL
+    https.get(url, (response) => {
+      // Handle non-2xx HTTP status codes
+      if (response.statusCode !== 200) {
+        return reject(new Error(`Failed to download file: HTTP ${response.statusCode}`));
+      }
+
+      // Create a writable stream to save the file
+      const fileStream = fs.createWriteStream(filePath);
+
+      // Pipe the response data to the file
+      response.pipe(fileStream);
+
+      fileStream.on('finish', () => {
+        fileStream.close();
+        console.log(`Downloaded and saved ${filename} to ${filePath}`);
+        resolve();
+      });
+
+      fileStream.on('error', (err) => {
+        fs.unlink(filePath, () => {}); // Delete the file if error occurs during writing
+        reject(new Error(`Error writing file: ${err.message}`));
+      });
+    })
+    .on('error', (err) => {
+      reject(new Error(`Error downloading file: ${err.message}`));
+    });
+  });
+}
 
 /**
  * Activates the extension
@@ -243,12 +307,45 @@ export function activate(context: vscode.ExtensionContext) {
     loadDictionaries(dictPaths);
     watchDictionaryFiles();
   } else {
-    vscode.window.showWarningMessage('No CIF dictionary paths configured. Tag definitions will not be available.');
+    //vscode.window.showWarningMessage('No CIF dictionary paths configured. Tag definitions will not be available.');
+    vscode.window.showWarningMessage(
+      'No CIF dictionaries configured. Would you like to add them from a single directory now? If you have many directories, edit your settings.json manually; see the readme.md.',
+      'Select Files',
+      'Open Settings',
+      'Download default files'
+    ).then(selection => {
+      if (selection === 'Select Files') {
+        vscode.window.showOpenDialog({
+          canSelectMany: true,
+          openLabel: 'Select CIF Dictionary Files',
+          filters: {
+            'CIF Files': ['dic', 'cif'],
+            'All Files': ['*']
+          }
+        }).then(files => {
+          if (files && files.length > 0) {
+            const paths = files.map(f => f.fsPath);
+            vscode.workspace.getConfiguration().update(
+              'cifTools.dictionaryPaths',
+              paths,
+              vscode.ConfigurationTarget.Global
+            ).then(() => {
+              vscode.window.showInformationMessage(`CIF dictionary paths saved.`);
+              loadDictionaries(paths);
+              watchDictionaryFiles();
+            });
+          }
+        });
+      } else if (selection === 'Open Settings') {
+        vscode.commands.executeCommand('workbench.action.openSettingsJson');
+      } else if (selection === 'Download default files') {
+        downloadAndSaveDictionaries(context);
+      }
+    });
+
   }
 
-  //-------------
   //to allow hover text to work
-  //-------------
   const hoverProvider = vscode.languages.registerHoverProvider('cif', {
     provideHover(document, position, token) {
       const range = document.getWordRangeAtPosition(position, /_[\w\d.]+/);
@@ -279,10 +376,8 @@ export function activate(context: vscode.ExtensionContext) {
   });
   context.subscriptions.push(hoverProvider);
 
-  //-------------
   //to allow jump-to-definition to work
-  //-------------
- const definitionProvider = vscode.languages.registerDefinitionProvider('cif', {
+  const definitionProvider = vscode.languages.registerDefinitionProvider('cif', {
     provideDefinition(document, position, token) {
       const range = document.getWordRangeAtPosition(position, /_[\w\d.]+/);
       if (!range) return;
