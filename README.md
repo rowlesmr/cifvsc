@@ -33,7 +33,7 @@ To use the CIF extension, specify the dictionary file paths in your `settings.js
 ```
 
 The recommended minimum file are:
-- [cif_core.dic](https://raw.githubusercontent.com/COMCIFS/cif_core/refs/heads/master/cif_core.dic)
+- [cif_core.dic](https://github.com/COMCIFS/cif_core/raw/refs/heads/master/cif_core.dic)
 - [ddl.dic](https://github.com/COMCIFS/cif_core/raw/refs/heads/master/ddl.dic)
 - [templ_attr.cif](https://github.com/COMCIFS/cif_core/raw/refs/heads/master/templ_attr.cif)
 - [templ_enum.cif](https://github.com/COMCIFS/cif_core/raw/refs/heads/master/templ_enum.cif)
