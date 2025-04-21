@@ -7,6 +7,8 @@ This Visual Studio Code extension provides syntax highlighting support for Cryst
 - Syntax highlighting for CIF tags and data blocks
 - Save frame recognition
 - Designed for working with CIF dictionaries and data files
+- Hover text containing tag definition
+- Auto-complete suggestions for tags
 
 ## File Extensions Supported
 
@@ -15,10 +17,62 @@ This Visual Studio Code extension provides syntax highlighting support for Cryst
 
 ## Future Ideas
 
-- Hover tooltips for tag definitions
-- Dictionary integration for tag lookups
+- Give me some ideas!
+
+# Configuration
+
+To use the CIF extension, specify the dictionary file paths in your `settings.json`:
+
+```json
+{
+  "cifTools.dictionaryPaths": [
+    "path/to/dictionary1.dic",
+    "path/to/dictionary2.dic"
+  ]
+}
+```
+
+The recommended minimum file are:
+- [cif_core.dic](https://raw.githubusercontent.com/COMCIFS/cif_core/refs/heads/master/cif_core.dic)
+- [ddl.dic](https://github.com/COMCIFS/cif_core/raw/refs/heads/master/ddl.dic)
+- [templ_attr.cif](https://github.com/COMCIFS/cif_core/raw/refs/heads/master/templ_attr.cif)
+- [templ_enum.cif](https://github.com/COMCIFS/cif_core/raw/refs/heads/master/templ_enum.cif)
+
+Additionally, if working with powder diffraction files, include
+- [cif_pow.dic](https://github.com/COMCIFS/Powder_Dictionary/raw/refs/heads/master/cif_pow.dic)
+- [multi_block_core.dic](https://github.com/COMCIFS/MultiBlock_Dictionary/raw/refs/heads/main/multi_block_core.dic)
+
+See the [COMCIFS github](https://github.com/COMCIFS) for other available dictionaries.
+
 
 ## Installation
 
-1. Download the `.vsix` file or package the extension using `vsce package`
-2. Install in VS Code via:
+### 🛠️ Manual Installation from VSIX File
+
+If you have a `.vsix` file (e.g., provided via email, GitHub release, or another source), you can manually install the extension in Visual Studio Code.
+
+#### Download the `.vsix` file from Github
+
+- Visit the **[Releases](https://github.com/rowlesmr/cifvsc)** page.
+- Download the latest `.vsix` file (it will look like `cif-0.0.1.vsix`).
+
+Then:
+
+#### Option 1: Using the Extensions View
+
+1. Open **Visual Studio Code**.
+2. Open the **Extensions** view:
+   - Click the squares icon in the left sidebar
+     **or**
+   - Press `Ctrl+Shift+X` (Windows/Linux) or `Cmd+Shift+X` (macOS).
+3. Click the **More Actions (⋯)** menu at the top-right of the Extensions panel.
+4. Select **Install from VSIX...**
+5. Browse to and select your `.vsix` file.
+6. The extension will install, and you may be prompted to **Reload** the window.
+
+#### Option 2: Using the Command Palette
+
+1. Press `Ctrl+Shift+P` (Windows/Linux) or `Cmd+Shift+P` (macOS) to open the **Command Palette**.
+2. Type and select:  `Extensions: Install from VSIX...`
+3. Choose the `.vsix` file from your system.
+4. Wait for the installation to finish and reload if prompted.
