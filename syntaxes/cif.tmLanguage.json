@@ -1,0 +1,112 @@
+{
+	"name": "Crystallographic Information File",
+	"scopeName": "source.cif",
+	"fileTypes": ["cif"],
+	"patterns": [
+	  { "include": "#comments" },
+	  { "include": "#dataBlocks" },
+	  { "include": "#saveBlocks" },
+	  { "include": "#tags" },
+	  { "include": "#loop" },
+	  { "include": "#quotedStrings" },
+	  { "include": "#multilineStrings" },
+	  { "include": "#numbers" }
+	],
+	"repository": {
+	  "comments": {
+		"patterns": [
+		  {
+			"name": "comment.line.number-sign.cif",
+			"match": "#.*$"
+		  }
+		]
+	  },
+	  "dataBlocks": {
+		"patterns": [
+		  {
+			"name": "keyword.control.data-block.cif",
+			"match": "\\bdata_[A-Za-z0-9_.\u00A0-\uD7FF\uE000-\uFDCF\uFDF0-\uFFFD\u10000-\u1FFFD\u20000-\u2FFFD\u30000-\u3FFFD\u40000-\u4FFFD\u50000-\u5FFFD\u60000-\u6FFFD\u70000-\u7FFFD\u80000-\u8FFFD\u90000-\u9FFFD\uA0000-\uAFFFD\uB0000-\uBFFFD\uC0000-\uCFFFD\uD0000-\uDFFFD\uE0000-\uEFFFD\uF0000-\uFFFFD\u100000-\u10FFFD&&[^@#\\x00-\\x20\\x7F]]+"
+		  }
+		]
+	  },
+	  "saveBlocks": {
+		"patterns": [
+		  {
+			"name": "meta.block.save.cif",
+			"begin": "\\bsave_[A-Za-z0-9_.\u00A0-\uD7FF\uE000-\uFDCF\uFDF0-\uFFFD\u10000-\u1FFFD\u20000-\u2FFFD\u30000-\u3FFFD\u40000-\u4FFFD\u50000-\u5FFFD\u60000-\u6FFFD\u70000-\u7FFFD\u80000-\u8FFFD\u90000-\u9FFFD\uA0000-\uAFFFD\uB0000-\uBFFFD\uC0000-\uCFFFD\uD0000-\uDFFFD\uE0000-\uEFFFD\uF0000-\uFFFFD\u100000-\u10FFFD&&[^@#\\x00-\\x20\\x7F]]+",
+			"beginCaptures": {
+			  "0": {
+				"name": "keyword.control.save-frame.cif"
+			  }
+			},
+			"end": "\\bsave_\\b",
+			"endCaptures": {
+			  "0": {
+				"name": "keyword.control.save-frame.cif"
+			  }
+			},
+			"patterns": [
+			  { "include": "#tags" },
+			  { "include": "#loop" },
+			  { "include": "#quotedStrings" },
+			  { "include": "#multilineStrings" },
+			  { "include": "#numbers" },
+			  { "include": "#comments" }
+			]
+		  }
+		]
+	  },
+	  "tags": {
+		"patterns": [
+		  {
+			"name": "variable.parameter.cif",
+			"match": "(?<=^|\\s)_[A-Za-z0-9_.\u00A0-\uD7FF\uE000-\uFDCF\uFDF0-\uFFFD\u10000-\u1FFFD\u20000-\u2FFFD\u30000-\u3FFFD\u40000-\u4FFFD\u50000-\u5FFFD\u60000-\u6FFFD\u70000-\u7FFFD\u80000-\u8FFFD\u90000-\u9FFFD\uA0000-\uAFFFD\uB0000-\uBFFFD\uC0000-\uCFFFD\uD0000-\uDFFFD\uE0000-\uEFFFD\uF0000-\uFFFFD\u100000-\u10FFFD&&[^@#\\x00-\\x20\\x7F]]+"
+		  }
+		]
+	  },
+	  "loop": {
+		"patterns": [
+		  {
+			"name": "keyword.control.loop.cif",
+			"match": "\\bloop_\\b"
+		  }
+		]
+	  },
+	  "quotedStrings": {
+		"patterns": [
+		  {
+			"name": "string.quoted.single.cif",
+			"begin": "'",
+			"end": "'"
+		  },
+		  {
+			"name": "string.quoted.double.cif",
+			"begin": "\"",
+			"end": "\""
+		  }
+		]
+	  },
+	  "multilineStrings": {
+		"patterns": [
+		  {
+			"name": "string.unquoted.block.cif",
+			"begin": "^;",
+			"end": "^;"
+		  }
+		]
+	  },
+	  "numbers": {
+		"patterns": [
+		  {
+			"name": "constant.numeric.float.cif",
+			"match": "\\b[+-]?\\d*\\.\\d+(?:[eE][+-]?\\d+)?\\b"
+		  },
+		  {
+			"name": "constant.numeric.integer.cif",
+			"match": "\\b[+-]?\\d+\\b"
+		  }
+		]
+	  }
+	}
+}
+

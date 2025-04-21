@@ -1,0 +1,66 @@
+{
+  "scripts": {
+    "compile": "tsc -p ./"
+  },
+  "name": "cif",
+  "displayName": "CIF",
+  "description": "Crystallographic Information File",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.99.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "extension.hover",
+        "title": "Show Hover"
+      }
+    ],
+    "languages": [
+      {
+        "id": "cif",
+        "aliases": [
+          "Crystallographic Information File",
+          "CIF"
+        ],
+        "extensions": [
+          ".cif",
+          ".dic"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "cif",
+        "scopeName": "source.cif",
+        "path": "./syntaxes/cif.tmLanguage.json"
+      }
+    ]
+  },
+  "configuration": {
+    "title": "CIF Tools",
+    "properties": {
+      "cifTools.dictionaryPaths": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "default": [],
+        "description": "List of paths to CIF dictionary files to load for tag definitions."
+      }
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.1",
+    "@types/vscode": "^1.99.1",
+    "typescript": "^5.8.3"
+  },
+  "activationEvents": [
+    "onLanguage:cif"
+],
+"main": "./out/extension.js"
+}
