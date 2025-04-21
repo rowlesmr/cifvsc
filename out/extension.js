@@ -196,7 +196,44 @@ function activate(context) {
         watchDictionaryFiles();
     }
     else {
-        vscode.window.showWarningMessage('No CIF dictionary paths configured. Tag definitions will not be available.');
+        //vscode.window.showWarningMessage('No CIF dictionary paths configured. Tag definitions will not be available.');
+        vscode.window.showWarningMessage('No CIF dictionaries configured. Would you like to add them from a single directory now? If you have many directories, edit your settings.json manually; see the readme.md.', 'Select Files', 'Open Settings').then(selection => {
+            if (selection === 'Select Files') {
+                vscode.window.showOpenDialog({
+                    canSelectMany: true,
+                    openLabel: 'Select CIF Dictionary Files',
+                    filters: {
+                        'CIF Files': ['dic', 'cif'],
+                        'All Files': ['*']
+                    }
+                }).then(files => {
+                    if (files && files.length > 0) {
+                        const paths = files.map(f => f.fsPath);
+                        vscode.workspace.getConfiguration().update('cifTools.dictionaryPaths', paths, vscode.ConfigurationTarget.Global).then(() => {
+                            vscode.window.showInformationMessage(`CIF dictionary paths saved.`);
+                            loadDictionaries(paths);
+                            watchDictionaryFiles();
+                        });
+                    }
+                });
+            }
+            else if (selection === 'Open Settings') {
+                vscode.commands.executeCommand('workbench.action.openSettingsJson');
+            }
+        });
+        /*
+        
+            "cifTools.dictionaryPaths": [
+                            "C:/Users/User/Documents/github/cif_core/cif_core.dic",
+                            "C:/Users/User/Documents/github/cif_core/ddl.dic",
+                            "C:/Users/User/Documents/github/cif_core/templ_attr.cif",
+                            "C:/Users/User/Documents/github/cif_core/templ_enum.cif",
+                            "C:/Users/User/Documents/github/Powder_Dictionary/cif_pow.dic",
+                            "C:/Users/User/Documents/github/MultiBlock_Dictionary/multi_block_core.dic"]
+        
+        
+        
+        */
     }
     //-------------
     //to allow hover text to work
