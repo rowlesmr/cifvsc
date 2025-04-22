@@ -4,6 +4,7 @@
   },
   "name": "cif",
   "displayName": "CIF",
+  "publisher": "Matthew Rowles",
   "description": "Crystallographic Information File",
   "version": "0.0.1",
   "engines": {

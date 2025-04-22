@@ -1,0 +1,47 @@
+data_atom_site_aniso_B_
+    loop_ _name                '_atom_site_aniso_B_11'
+                               '_atom_site_aniso_B_12'
+                               '_atom_site_aniso_B_13'
+                               '_atom_site_aniso_B_22'
+                               '_atom_site_aniso_B_23'
+                               '_atom_site_aniso_B_33'
+    _category                    atom_site
+    _type                        numb
+    _type_conditions             esd
+    _list                        yes
+    _list_reference            '_atom_site_aniso_label'
+    loop_ _related_item
+          _related_function    '_atom_site_aniso_U_'  conversion
+    _units                       A^2^
+    _units_detail              'angstrom squared'
+    _definition
+;              These are the standard anisotropic atomic displacement
+               components in angstroms squared which appear in the
+               structure-factor term
+
+               T = exp{-(1/4) sum~i~ [ sum~j~ (B^ij^ h~i~ h~j~ a*~i~ a*~j~) ] }
+
+               h = the Miller indices
+               a* = the reciprocal-space cell lengths
+
+               The unique elements of the real symmetric matrix are
+               entered by row.
+
+               The IUCr Commission on Nomenclature recommends against the use
+               of B for reporting atomic displacement parameters. U, being
+               directly proportional to B, is preferred.
+;
+
+data_atom_site_aniso_label
+    _name                      '_atom_site_aniso_label'
+    _category                    atom_site
+    _type                        char
+    _list                        yes
+    _list_link_parent          '_atom_site_label'
+    _definition
+;              Anisotropic atomic displacement parameters are usually looped in
+               a separate list. If this is the case, this code must match the
+               _atom_site_label of the associated atom in the atom coordinate
+               list and conform with the same rules described in
+               _atom_site_label.
+;
