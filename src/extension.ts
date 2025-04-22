@@ -161,7 +161,7 @@ function loadDictionaries(paths: string[], reloadPath: string = "") {
 
       for (const [tag, saveframe] of parsedMap) {
           // Find the line number of the saveframe definition
-          const saveLine = lines.findIndex(line => line.startsWith(`save${tag}`));
+          const saveLine = lines.findIndex(line => line.startsWith(`save${tag}`) || line.endsWith(`'${tag}'`));
           if (saveLine !== -1) {
             const uri = vscode.Uri.file(dictPath);
             const position = new vscode.Position(saveLine, 0); // Position at the start of the saveframe
@@ -359,7 +359,7 @@ export function activate(context: vscode.ExtensionContext) {
   }
   alreadyActivated = true;
 
-  vscode.window.showInformationMessage('CIF Extension activated NEWVERSION');
+  vscode.window.showInformationMessage('CIF Extension activated.');
   const config = vscode.workspace.getConfiguration('cifTools');
   const dictPaths = config.get<string[]>('dictionaryPaths') || [];
 

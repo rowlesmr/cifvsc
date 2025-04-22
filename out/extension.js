@@ -134,7 +134,7 @@ function loadDictionaries(paths, reloadPath = "") {
             const lines = data.split('\n');
             for (const [tag, saveframe] of parsedMap) {
                 // Find the line number of the saveframe definition
-                const saveLine = lines.findIndex(line => line.startsWith(`save${tag}`));
+                const saveLine = lines.findIndex(line => line.startsWith(`save${tag}`) || line.endsWith(`'${tag}'`));
                 if (saveLine !== -1) {
                     const uri = vscode.Uri.file(dictPath);
                     const position = new vscode.Position(saveLine, 0); // Position at the start of the saveframe
@@ -206,8 +206,8 @@ function watchDictionaryFiles() {
 }
 function updateTagList() {
     // Update the tagList whenever the dictionaries are loaded or updated
-    console.log("Updating tag list.");
     tagList = Array.from(tagToSaveframes.keys());
+    console.log("Updating tag list.");
 }
 /**
  * Provides auto-suggestions for CIF tags
@@ -291,7 +291,7 @@ function activate(context) {
         return;
     }
     alreadyActivated = true;
-    vscode.window.showInformationMessage('CIF Extension activated NEWVERSION');
+    vscode.window.showInformationMessage('CIF Extension activated.');
     const config = vscode.workspace.getConfiguration('cifTools');
     const dictPaths = config.get('dictionaryPaths') || [];
     if (dictPaths.length > 0) {
