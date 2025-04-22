@@ -256,8 +256,8 @@ function watchDictionaryFiles() {
 
 function updateTagList() {
   // Update the tagList whenever the dictionaries are loaded or updated
-  console.log("Updating tag list.");
   tagList = Array.from(tagToSaveframes.keys());
+  console.log("Updating tag list.");
 }
 
 
