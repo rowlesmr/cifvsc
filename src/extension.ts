@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as https from 'https';
 
+let alreadyActivated = false;
 
 let tagToSaveframes = new Map<string, string[]>();
 let tagToLocations = new Map<string, vscode.Location[]>();
@@ -15,7 +16,16 @@ let tagList: string[] = []; // This will hold just the tags (keys)
  */
 function parseDictionary(content: string): Map<string, string> {
 
-  //console.log('Parsing dictionary...');
+  const isDDL2 = content.trimStart().startsWith('#\\#CIF_2.0');
+  const map = isDDL2 ? parseDDL2Dictionary(content) : parseDDL1Dictionary(content);
+
+  return map;
+}
+
+/**
+ * Parses a single CIF DDL2 dictionary content into a map of tag -> saveframe
+ */
+function parseDDL2Dictionary(content: string): Map<string, string> {
 
   const map = new Map<string, string>();
 
@@ -33,10 +43,52 @@ function parseDictionary(content: string): Map<string, string> {
     map.set(saveframeName, fullSaveframe);
   }
 
-  //console.log("Finished parsing dictionary.");
+  return map;
+}
+
+/**
+ * Parses a single CIF DDL1 dictionary content into a map of tag -> data block
+ */
+function parseDDL1Dictionary(content: string): Map<string, string> {
+  const map = new Map<string, string>();
+  content = content.replace(/\r\n?/g, '\n');
+
+  const blockRegex = /data_(\S+)[\s\S]*?(?=data_\S+|$)/g;
+  let match: RegExpExecArray | null;
+
+  while ((match = blockRegex.exec(content))) {
+    const blockBody = match[0];
+
+    // Check for looped _name values
+    const loopNameMatch = blockBody.match(/loop_\s+(_name)\s+([\s\S]*?)(?=\s+_\S)/);
+    let tagNames: string[] = [];
+
+    if (loopNameMatch && loopNameMatch[1] == ('_name')) {
+      // We're in a loop_ with _name lines
+      let names = loopNameMatch[2].replace(/\s+/g, '\n').replace(/['"]/g, '');
+
+      const nameLines = names
+        .split('\n')
+        .map(line => line.trim())
+        .filter(line => line.startsWith("'_") || line.startsWith('"_') || line.startsWith('_'));
+
+      tagNames = nameLines.map(line => line.replace(/^['"]?/, '').replace(/['"]?$/, ''));
+    } else {
+      // Try to find a single _name outside of loop_
+      const singleNameMatch = blockBody.match(/_name\s+([\s\S]*?)(?=\s+_\S)/);
+      if (singleNameMatch) {
+        tagNames = [singleNameMatch[1].replace(/['"]/g, '')];
+      }
+    }
+
+    for (const tag of tagNames) {
+      map.set(tag, blockBody.trim());
+    }
+  }
 
   return map;
 }
+
 
 /**
  * Loads multiple dictionary files, merges their tag -> saveframe mappings
@@ -130,6 +182,7 @@ function loadDictionaries(paths: string[], reloadPath: string = "") {
               tagToFiles.set(tag, []);
             }
             tagToFiles.get(tag)!.push(dictPath);
+              console.log("something");
           }
         }
 
@@ -143,6 +196,8 @@ function loadDictionaries(paths: string[], reloadPath: string = "") {
 
     });
    });
+
+   console.log(`Loaded all dictionaries.`);
 }
 
 
@@ -299,7 +354,12 @@ function downloadFile(url: string, directory: string, filename: string): Promise
  * Activates the extension
  */
 export function activate(context: vscode.ExtensionContext) {
-  vscode.window.showInformationMessage('CIF Extension activated');
+  if (alreadyActivated) {
+    return;
+  }
+  alreadyActivated = true;
+
+  vscode.window.showInformationMessage('CIF Extension activated NEWVERSION');
   const config = vscode.workspace.getConfiguration('cifTools');
   const dictPaths = config.get<string[]>('dictionaryPaths') || [];
 
