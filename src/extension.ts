@@ -5,64 +5,194 @@ import * as https from 'https';
 
 let alreadyActivated = false;
 
-let tagToSaveframes = new Map<string, string[]>();
-let tagToLocations = new Map<string, vscode.Location[]>();
-let tagToFiles = new Map<string, string[]>();
 
-let tagList: string[] = []; // This will hold just the tags (keys)
 
-/**
- * Parses a single CIF dictionary content into a map of tag -> saveframe
- */
-function parseDictionary(content: string): Map<string, string> {
 
-  const isDDL2 = content.trimStart().startsWith('#\\#CIF_2.0');
-  const map = isDDL2 ? parseDDL2Dictionary(content) : parseDDL1Dictionary(content);
+class Tag {
+  m_name: string;
+  m_definition: string[];
+  m_location: vscode.Location[];
 
-  return map;
-}
-
-/**
- * Parses a single CIF DDL2 dictionary content into a map of tag -> saveframe
- */
-function parseDDL2Dictionary(content: string): Map<string, string> {
-
-  const map = new Map<string, string>();
-
-  // Normalize all line endings to \n to simplify regex
-  content = content.replace(/\r\n?/g, '\n');
-
-  const saveframeRegex = /save(_\S+)\n([\s\S]*?)(?=\nsave_\S+|\n#|\n\s*$)/g;
-  let match: RegExpExecArray | null;
-
-  while ((match = saveframeRegex.exec(content))) {
-    const saveframeName = match[1];
-    const saveframeBody = match[2];
-    const fullSaveframe = `save${saveframeName}\n${saveframeBody.trim()}`;
-
-    map.set(saveframeName, fullSaveframe);
+  constructor(tagName: string, definition: string="", filePath: string = "", lineNumber: number=0)
+  {
+    this.m_name = tagName;
+    this.m_definition = [definition];  // Store definition in an array
+    this.m_location = [new vscode.Location(vscode.Uri.parse(filePath), new vscode.Position(lineNumber, 0))];
   }
 
-  return map;
+  // Combine two tags with the same name
+  combine(otherTag: Tag): Tag {
+    if (this.m_name === otherTag.m_name) {
+      const combinedTag = new Tag(this.m_name);  // Start with the first tag's name
+      combinedTag.m_definition = [...this.m_definition, ...otherTag.m_definition];
+      combinedTag.m_location = [...this.m_location, ...otherTag.m_location];
+      return combinedTag;
+    }
+    throw new Error('Cannot combine tags with different names');
+  }
+
+  // Method to check equality based on name only
+  equals(otherTag: Tag): boolean {
+    return this.m_name === otherTag.m_name;  // Tags are equal if their names match
+  }
+
+  toString(): string {
+    return `Tag[name: ${this.m_name}, Definitions: ${this.m_definition.length}, Locations: ${this.m_location.length}]`;
+  }
+
+  // Comparison method for sorting
+  compareTo(otherTag: Tag): number {
+    return this.m_name.localeCompare(otherTag.m_name);
+  }
+
+  // Make the class iterable so you can use array destructuring. is can use a loop like: for (const [name, definitions, locations] of tags)
+  *[Symbol.iterator](): IterableIterator<any> {
+    yield this.m_name;
+    yield this.m_definition;
+    yield this.m_location;
+  }
+
+  // Method to check if the tag is in the specified file path
+  isInFilePath(filepath: string): boolean {
+    const uriToCheck = vscode.Uri.file(filepath);  // Convert filepath string to vscode.Uri
+
+    // Iterate through each location's URI and check if it matches
+    for (let loc of this.m_location) {
+      if (loc.uri.fsPath === uriToCheck.fsPath) {  // Compare file system path
+        return true;
+      }
+    }
+    return false;
+  }
+
+  // Method to get the file paths as an array of strings
+  getFilePaths(): string[] {
+    return this.m_location.map(loc => loc.uri.fsPath);  // Map each location to its fsPath and return as an array
+  }
+
+  addDefinition(newDefinition: string, newLocation: vscode.Location): void {
+    this.m_definition.push(newDefinition);
+    this.m_location.push(newLocation);
+  }
 }
 
-/**
- * Parses a single CIF DDL1 dictionary content into a map of tag -> data block
- */
-function parseDDL1Dictionary(content: string): Map<string, string> {
-  const map = new Map<string, string>();
-  content = content.replace(/\r\n?/g, '\n');
 
-  const blockRegex = /data_(\S+)[\s\S]*?(?=data_\S+|$)/g;
+class Tags implements Iterable<Tag> {
+  private m_tags: Map<string, Tag>;
+  private m_tagNames: string[];
+
+  constructor(tags: Tag[] = []) {
+    this.m_tags = new Map(tags.map(tag => [tag.m_name, tag])); // Map of tag names to tag objects
+    this.m_tagNames = Array.from(this.m_tags.keys()); // Extract keys as tag names
+  }
+
+  addTag(tag: Tag): void {
+    // Check if the tag with the same name already exists
+    if (this.m_tags.has(tag.m_name)) {
+      // If it exists, retrieve the existing tag
+      const existingTag = this.m_tags.get(tag.m_name)!;
+
+      // Append the new definition and location to the existing tag
+      existingTag.addDefinition(tag.m_definition[0], tag.m_location[0]);
+    } else {
+      // If it doesn't exist, add the new tag and update names array
+      this.m_tags.set(tag.m_name, tag);
+      this.m_tagNames = Array.from(this.m_tags.keys());
+    }
+  }
+
+  addTags(tags: Tag[]): void {
+    for (const tag of tags) {
+      this.addTag(tag); // Leverages your existing logic
+    }
+  }
+
+  getTags(): Tag[] {
+    return Array.from(this.m_tags.values());
+  }
+
+  getTagNames(): string[] {
+    return this.m_tagNames;
+  }
+
+  getTagDefinition(tag:string): string[] | undefined {
+    return this.m_tags.get(tag)?.m_definition
+  }
+
+  getTagLocation(tag:string): vscode.Location[] | undefined {
+    return this.m_tags.get(tag)?.m_location
+  }
+
+  removeTagsFromFilePath(filePath: string): void {
+    const uriToRemove = vscode.Uri.file(filePath);
+
+    // First pass: Iterate through the Map entries (key-value pairs)
+    for (const [key, tag] of this.m_tags) {
+      // Iterate over the locations in reverse order
+      for (let i = tag.m_location.length - 1; i >= 0; i--) {
+        if (tag.m_location[i].uri.fsPath === uriToRemove.fsPath) {
+          tag.m_location.splice(i, 1);
+          tag.m_definition.splice(i, 1);
+        }
+      }
+
+      // If the tag has no definitions or locations left, remove it from the Map
+      if (tag.m_definition.length === 0) {
+        this.m_tags.delete(key);
+      }
+    }
+
+    // Update the tagNames list after removing any tags
+    this.m_tagNames = Array.from(this.m_tags.keys());
+
+  }
+
+  //Maps iterate in insertion order, so redoing the map puts everything in order
+  sort(): void {
+    this.m_tags = new Map(
+      Array.from(this.m_tags.entries()).sort(([nameA, tagA], [nameB, tagB]) => tagA.compareTo(tagB))
+    );
+    this.m_tagNames = Array.from(this.m_tags.keys());  // Rebuild tag names list
+  }
+
+  toString(): string {
+    return Array.from(this.m_tags.values()).map(tag => tag.toString()).join('\n');
+  }
+
+  // ✅ Iterable implementation
+  [Symbol.iterator](): Iterator<Tag> {
+    return this.m_tags.values()[Symbol.iterator]();
+  }
+
+  clear(): void {
+    this.m_tagNames = [];
+    this.m_tags.clear;
+  }
+}
+
+
+
+
+let allTags = new Tags;
+
+
+/**
+ * Parses a single CIF DDL1 dictionary content into an array of Tags
+ */
+function parseDDL1Dictionary(content: string, filePath: string): Tag[] {
+  let tags: Tag[] = []
+  let lineLengths = stringToLineLengths(content);
+
+  const blockRegex = /(?:^|\s)data_(\S+)[\s\S]*?(?=data_\S+|$)/g;
   let match: RegExpExecArray | null;
 
   while ((match = blockRegex.exec(content))) {
     const blockBody = match[0];
+    const index = match.index;
+    const lineNumber = lineNumberFromIndex(index, lineLengths);
 
     // Check for looped _name values
-    const loopNameMatch = blockBody.match(/loop_\s+(_name)\s+([\s\S]*?)(?=\s+_\S)/);
-    let tagNames: string[] = [];
-
+    const loopNameMatch = blockBody.match(/(?:^|\s)loop_\s+(_name)\s+([\s\S]*?)(?=\s+_\S)/);
     if (loopNameMatch && loopNameMatch[1] == ('_name')) {
       // We're in a loop_ with _name lines
       let names = loopNameMatch[2].replace(/\s+/g, '\n').replace(/['"]/g, '');
@@ -72,21 +202,86 @@ function parseDDL1Dictionary(content: string): Map<string, string> {
         .map(line => line.trim())
         .filter(line => line.startsWith("'_") || line.startsWith('"_') || line.startsWith('_'));
 
-      tagNames = nameLines.map(line => line.replace(/^['"]?/, '').replace(/['"]?$/, ''));
+        nameLines.map(line => line.replace(/^['"]?/, '').replace(/['"]?$/, '')).forEach(tag => {
+          tags.push(new Tag(tag, blockBody, filePath, lineNumber));
+        });
     } else {
       // Try to find a single _name outside of loop_
-      const singleNameMatch = blockBody.match(/_name\s+([\s\S]*?)(?=\s+_\S)/);
+      const singleNameMatch = blockBody.match(/(?:^|\s)_name\s+([\s\S]*?)(?=\s+_\S)/);
       if (singleNameMatch) {
-        tagNames = [singleNameMatch[1].replace(/['"]/g, '')];
+        tags.push(new Tag(singleNameMatch[1].replace(/['"]/g, ''), blockBody, filePath, lineNumber));
       }
-    }
-
-    for (const tag of tagNames) {
-      map.set(tag, blockBody.trim());
     }
   }
 
-  return map;
+  return tags;
+}
+
+
+function parseDDL2Dictionary(content: string, filePath: string): Tag[] {
+  let tags: Tag[] = []
+  let lineLengths = stringToLineLengths(content);
+
+  const saveframeRegex = /(?:^|\s)save(_\S+)\n([\s\S]*?)(?=\nsave_\S+|\n#|\n\s*$)/g;
+  let match: RegExpExecArray | null;
+
+  while ((match = saveframeRegex.exec(content))) {
+    const saveframeName = match[1];
+    const saveframeBody = match[2];
+    const fullSaveframe = `save${saveframeName}\n${saveframeBody.trim()}`;
+    const index = match.index;
+    const lineNumber = lineNumberFromIndex(index, lineLengths);
+
+    tags.push(new Tag(saveframeName, fullSaveframe, filePath, lineNumber))
+  }
+
+  return tags;
+}
+
+function stringToLineLengths(content: string): number[] {
+  const lines = content.split('\n');
+  const cumulative: number[] = [];
+
+  let total = 0;
+  lines.forEach(line => {
+    total += line.length + 1; // +1 for '\n'
+    cumulative.push(total);
+  });
+
+  return cumulative;
+}
+
+function lineNumberFromIndex(index: number, lineLengths: number[]): number {
+  let left = 0;
+  let right = lineLengths.length - 1;
+
+  while (left <= right) {
+    const mid = Math.floor((left + right) / 2);
+
+    if (lineLengths[mid] > index) {
+      // If the middle element is greater, check if it's the first one or if there's an earlier match
+      if (mid === 0 || lineLengths[mid - 1] <= index) {
+        return mid;
+      }
+      // Otherwise, continue searching in the left half
+      right = mid - 1;
+    } else {
+      // If the middle element is not greater, search the right half
+      left = mid + 1;
+    }
+  }
+
+  return -1; // No element greater than the comparison found}
+}
+
+
+
+/**
+ * Parses a single CIF dictionary content into a map of tag -> saveframe
+ */
+function parseDictionary(content: string, filePath: string): Tag[] {
+  const isDDL2 = content.trimStart().startsWith('#\\#CIF_2.0');
+  return isDDL2 ? parseDDL2Dictionary(content, filePath) : parseDDL1Dictionary(content, filePath);
 }
 
 
@@ -97,44 +292,10 @@ function loadDictionaries(paths: string[], reloadPath: string = "") {
   //a hack to reload a dictionary upon the file changing
   if(reloadPath == "") { //then it's a normal reload everything
     console.log("Loading dictionaries...");
-
-    tagToSaveframes.clear();
-    tagToLocations.clear();
-    tagToFiles.clear();
-
-
+    allTags.clear();
   } else {
     console.log(`Reloading dictionary: ${reloadPath}`);
-    //delete all existing references to the reloadPath
-    for (const [tag, filePaths] of tagToFiles) {
-      let deleteIndex = -1;
-      for(const [index, file] of filePaths.entries()) {
-        if(file == reloadPath){
-          deleteIndex = index;
-        }
-      }
-      if(deleteIndex == -1){
-        continue;
-      }
-
-      //deleteIndex is a valid index to a thing to delete
-      if(filePaths.length == 1) { //there is only one thing to delete
-        tagToSaveframes.delete(tag);
-        tagToLocations.delete(tag);
-        tagToFiles.delete(tag);
-      } else { //there is more than one entry in the value array, and so it must be preserved
-        let tmpSave = tagToSaveframes.get(tag);
-        if(tmpSave) { tmpSave.splice(deleteIndex, 1); }
-
-        let tmpLoc = tagToLocations.get(tag);
-        if(tmpLoc) { tmpLoc.splice(deleteIndex, 1); }
-
-        let tmpFile = tagToFiles.get(tag);
-        if(tmpFile) { tmpFile.splice(deleteIndex, 1); }
-      }
-
-
-    }
+    allTags.removeTagsFromFilePath(reloadPath);
     paths = [reloadPath] //so I don't need to change the remaining code
   }
 
@@ -149,49 +310,21 @@ function loadDictionaries(paths: string[], reloadPath: string = "") {
 
       console.log(`Dictionary loaded, parsing file: ${dictPath}.`);
 
-      // Normalize EOLs for consistency
+      // Normalize all line endings to \n to simplify regex
       data = data.replace(/\r\n?/g, '\n');
 
-      const parsedMap = parseDictionary(data);
-      console.log(`Parsed dictionary, found ${parsedMap.size} tags.`);
+      let newTags = parseDictionary(data, dictPath);
 
+      console.log(`Parsed dictionary, found ${newTags.length} tags.`);
 
-     // Split data into lines to find line numbers of tags
-      const lines = data.split('\n');
-
-      for (const [tag, saveframe] of parsedMap) {
-          // Find the line number of the saveframe definition
-          const saveLine = lines.findIndex(line => line.startsWith(`save${tag}`) || line.endsWith(`'${tag}'`));
-          if (saveLine !== -1) {
-            const uri = vscode.Uri.file(dictPath);
-            const position = new vscode.Position(saveLine, 0); // Position at the start of the saveframe
-            const location = new vscode.Location(uri, position);
-
-            // Add to arrays instead of setting single values
-            if (!tagToSaveframes.has(tag)) {
-              tagToSaveframes.set(tag, []);
-            }
-            tagToSaveframes.get(tag)!.push(saveframe);
-
-            if (!tagToLocations.has(tag)) {
-              tagToLocations.set(tag, []);
-            }
-            tagToLocations.get(tag)!.push(location);
-
-            if (!tagToFiles.has(tag)) {
-              tagToFiles.set(tag, []);
-            }
-            tagToFiles.get(tag)!.push(dictPath);
-              console.log("something");
-          }
-        }
+      allTags.addTags(newTags);
 
       console.log(`Loaded CIF dictionary: ${path.basename(dictPath)}`);
       remaining--;
 
       if(remaining == 0) {
-        checkMultipleDefinitions();
-        updateTagList();
+        allTags.sort();
+        console.log("Sorted");
       }
 
     });
@@ -201,22 +334,27 @@ function loadDictionaries(paths: string[], reloadPath: string = "") {
 }
 
 
+function consolidateDuplicates(alltags: Tag[]): Tag[] {
+  alltags.sort((tag1, tag2) => tag1.compareTo(tag2));
 
+  // Array to hold the consolidated tags
+  const consolidatedTags: Tag[] = [];
 
-function checkMultipleDefinitions() {
-  //console.log("Checking for multiple definitions...");
-  for (const [tag, defs] of tagToSaveframes) {
-    if (defs.length > 1) {
-      console.log(`Tag "${tag}" has ${defs.length} definitions.`);
+  // Iterate through the sorted tags and combine duplicates
+  for (let i = 0; i < alltags.length; i++) {
+    const currentTag = alltags[i];
+
+    // If the last tag in the consolidatedTags array has the same name, combine them
+    if (consolidatedTags.length > 0 && consolidatedTags[consolidatedTags.length - 1].equals(currentTag)) {
+      consolidatedTags[consolidatedTags.length - 1] = consolidatedTags[consolidatedTags.length - 1].combine(currentTag);
+    } else {
+      // If no match, just add the tag to the array
+      consolidatedTags.push(currentTag);
     }
   }
-
-  for (const [tag, locs] of tagToLocations) {
-    if (locs.length > 1) {
-      console.log(`Tag "${tag}" has ${locs.length} definition locations.`);
-    }
-  }
+  return consolidatedTags;
 }
+
 
 
 /**
@@ -254,12 +392,6 @@ function watchDictionaryFiles() {
 
 
 
-function updateTagList() {
-  // Update the tagList whenever the dictionaries are loaded or updated
-  tagList = Array.from(tagToSaveframes.keys());
-  console.log("Updating tag list.");
-}
-
 
 /**
  * Provides auto-suggestions for CIF tags
@@ -272,7 +404,7 @@ function provideCifCompletionItems(document: vscode.TextDocument, position: vsco
   let completionItems: vscode.CompletionItem[] = [];
 
   // Loop over the prebuilt list of tags instead of the map
-  tagList.forEach(tag => {
+  allTags.getTagNames().forEach(tag => {
       // If the current word is empty or matches the start of a tag, suggest that tag
       if (!currentWord || tag.startsWith(currentWord)) {
           const completionItem = new vscode.CompletionItem(tag, vscode.CompletionItemKind.Keyword);
@@ -359,7 +491,7 @@ export function activate(context: vscode.ExtensionContext) {
   }
   alreadyActivated = true;
 
-  vscode.window.showInformationMessage('CIF Extension activated.');
+  vscode.window.showInformationMessage('CIF Extension activated. DEV');
   const config = vscode.workspace.getConfiguration('cifTools');
   const dictPaths = config.get<string[]>('dictionaryPaths') || [];
 
@@ -411,17 +543,17 @@ export function activate(context: vscode.ExtensionContext) {
       const range = document.getWordRangeAtPosition(position, /_[\w\d.]+/);
       if (!range) return;
 
-      const word = document.getText(range);
-      const saveframes = tagToSaveframes.get(word);
-      const files = tagToFiles.get(word);
+      const tagName = document.getText(range);
+      const saveframes = allTags.getTagDefinition(tagName);
+      const locations = allTags.getTagLocation(tagName);
       if (!saveframes || saveframes.length === 0) return;
-      if (!files || files.length === 0) return;
+      if (!locations || locations.length === 0) return;
 
       // Start building the hover content
       let hoverText = "";
       if(saveframes.length > 1){
         saveframes.forEach((definition, index) => {
-          const file = files[index]; // Access the second array using the same index
+          const file = locations[index].uri.fsPath; // Access the second array using the same index
           hoverText += `${file}\n${definition}\n\n---\n\n`;
         });
       } else {
@@ -442,8 +574,8 @@ export function activate(context: vscode.ExtensionContext) {
       const range = document.getWordRangeAtPosition(position, /_[\w\d.]+/);
       if (!range) return;
 
-      const word = document.getText(range);
-      const locations = tagToLocations.get(word);
+      const tagName = document.getText(range);
+      const locations = allTags.getTagLocation(tagName);
       return locations && locations.length > 0 ? locations : undefined;
     }
   });
@@ -460,16 +592,12 @@ export function activate(context: vscode.ExtensionContext) {
   // Add to subscriptions to handle cleanup on deactivation
   context.subscriptions.push(completionProvider);
 
-
-
-
+  console.log("End of activation.");
 }
 
 /**
  * Optional: clean up when extension deactivates
  */
 export function deactivate() {
-  tagToSaveframes.clear();
-  tagToLocations.clear();
-  tagToFiles.clear();
+  allTags.clear();
 }
