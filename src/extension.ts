@@ -79,25 +79,18 @@ class Tag {
 
 class Tags implements Iterable<Tag> {
   private m_tags: Map<string, Tag>;
-  private m_tagNames: string[];
 
   constructor(tags: Tag[] = []) {
     this.m_tags = new Map(tags.map(tag => [tag.m_name, tag])); // Map of tag names to tag objects
-    this.m_tagNames = Array.from(this.m_tags.keys()); // Extract keys as tag names
   }
 
   addTag(tag: Tag): void {
-    // Check if the tag with the same name already exists
     if (this.m_tags.has(tag.m_name)) {
-      // If it exists, retrieve the existing tag
       const existingTag = this.m_tags.get(tag.m_name)!;
-
-      // Append the new definition and location to the existing tag
-      existingTag.addDefinition(tag.m_definition[0], tag.m_location[0]);
+      const combined = existingTag.combine(tag);
+      this.m_tags.set(tag.m_name, combined);
     } else {
-      // If it doesn't exist, add the new tag and update names array
       this.m_tags.set(tag.m_name, tag);
-      this.m_tagNames = Array.from(this.m_tags.keys());
     }
   }
 
@@ -112,7 +105,7 @@ class Tags implements Iterable<Tag> {
   }
 
   getTagNames(): string[] {
-    return this.m_tagNames;
+    return Array.from(this.m_tags.keys());
   }
 
   getTagDefinition(tag:string): string[] | undefined {
@@ -141,10 +134,6 @@ class Tags implements Iterable<Tag> {
         this.m_tags.delete(key);
       }
     }
-
-    // Update the tagNames list after removing any tags
-    this.m_tagNames = Array.from(this.m_tags.keys());
-
   }
 
   //Maps iterate in insertion order, so redoing the map puts everything in order
@@ -152,7 +141,6 @@ class Tags implements Iterable<Tag> {
     this.m_tags = new Map(
       Array.from(this.m_tags.entries()).sort(([nameA, tagA], [nameB, tagB]) => tagA.compareTo(tagB))
     );
-    this.m_tagNames = Array.from(this.m_tags.keys());  // Rebuild tag names list
   }
 
   toString(): string {
@@ -165,8 +153,7 @@ class Tags implements Iterable<Tag> {
   }
 
   clear(): void {
-    this.m_tagNames = [];
-    this.m_tags.clear;
+    this.m_tags.clear();
   }
 }
 
