@@ -63,20 +63,15 @@ class Tag {
 class Tags {
     constructor(tags = []) {
         this.m_tags = new Map(tags.map(tag => [tag.m_name, tag])); // Map of tag names to tag objects
-        this.m_tagNames = Array.from(this.m_tags.keys()); // Extract keys as tag names
     }
     addTag(tag) {
-        // Check if the tag with the same name already exists
         if (this.m_tags.has(tag.m_name)) {
-            // If it exists, retrieve the existing tag
             const existingTag = this.m_tags.get(tag.m_name);
-            // Append the new definition and location to the existing tag
-            existingTag.addDefinition(tag.m_definition[0], tag.m_location[0]);
+            const combined = existingTag.combine(tag);
+            this.m_tags.set(tag.m_name, combined);
         }
         else {
-            // If it doesn't exist, add the new tag and update names array
             this.m_tags.set(tag.m_name, tag);
-            this.m_tagNames = Array.from(this.m_tags.keys());
         }
     }
     addTags(tags) {
@@ -88,7 +83,7 @@ class Tags {
         return Array.from(this.m_tags.values());
     }
     getTagNames() {
-        return this.m_tagNames;
+        return Array.from(this.m_tags.keys());
     }
     getTagDefinition(tag) {
         var _a;
@@ -114,13 +109,10 @@ class Tags {
                 this.m_tags.delete(key);
             }
         }
-        // Update the tagNames list after removing any tags
-        this.m_tagNames = Array.from(this.m_tags.keys());
     }
     //Maps iterate in insertion order, so redoing the map puts everything in order
     sort() {
         this.m_tags = new Map(Array.from(this.m_tags.entries()).sort(([nameA, tagA], [nameB, tagB]) => tagA.compareTo(tagB)));
-        this.m_tagNames = Array.from(this.m_tags.keys()); // Rebuild tag names list
     }
     toString() {
         return Array.from(this.m_tags.values()).map(tag => tag.toString()).join('\n');
@@ -130,8 +122,7 @@ class Tags {
         return this.m_tags.values()[Symbol.iterator]();
     }
     clear() {
-        this.m_tagNames = [];
-        this.m_tags.clear;
+        this.m_tags.clear();
     }
 }
 let allTags = new Tags;
@@ -141,14 +132,14 @@ let allTags = new Tags;
 function parseDDL1Dictionary(content, filePath) {
     let tags = [];
     let lineLengths = stringToLineLengths(content);
-    const blockRegex = /data_(\S+)[\s\S]*?(?=data_\S+|$)/g;
+    const blockRegex = /(?:^|\s)data_(\S+)[\s\S]*?(?=data_\S+|$)/g;
     let match;
     while ((match = blockRegex.exec(content))) {
         const blockBody = match[0];
         const index = match.index;
         const lineNumber = lineNumberFromIndex(index, lineLengths);
         // Check for looped _name values
-        const loopNameMatch = blockBody.match(/loop_\s+(_name)\s+([\s\S]*?)(?=\s+_\S)/);
+        const loopNameMatch = blockBody.match(/(?:^|\s)loop_\s+(_name)\s+([\s\S]*?)(?=\s+_\S)/);
         if (loopNameMatch && loopNameMatch[1] == ('_name')) {
             // We're in a loop_ with _name lines
             let names = loopNameMatch[2].replace(/\s+/g, '\n').replace(/['"]/g, '');
@@ -173,7 +164,7 @@ function parseDDL1Dictionary(content, filePath) {
 function parseDDL2Dictionary(content, filePath) {
     let tags = [];
     let lineLengths = stringToLineLengths(content);
-    const saveframeRegex = /save(_\S+)\n([\s\S]*?)(?=\nsave_\S+|\n#|\n\s*$)/g;
+    const saveframeRegex = /(?:^|\s)save(_\S+)\n([\s\S]*?)(?=\nsave_\S+|\n#|\n\s*$)/g;
     let match;
     while ((match = saveframeRegex.exec(content))) {
         const saveframeName = match[1];
