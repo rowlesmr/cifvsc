@@ -170,31 +170,26 @@ function parseDDL1Dictionary(content: string, filePath: string): Tag[] {
   let tags: Tag[] = []
   let lineLengths = stringToLineLengths(content);
 
-  const blockRegex = /(?:^|\s)data_(\S+)[\s\S]*?(?=data_\S+|$)/g;
+  const blockRegex = /(?<=^|\s)(data_([a-zA-Z0-9_.]+)\s[\s\S]*?)(?=\sdata_[a-zA-Z0-9_.]+|$)/g;
   let match: RegExpExecArray | null;
 
   while ((match = blockRegex.exec(content))) {
-    const blockBody = match[0];
+    const blockBody = match[1];
     const index = match.index;
     const lineNumber = lineNumberFromIndex(index, lineLengths);
 
     // Check for looped _name values
-    const loopNameMatch = blockBody.match(/(?:^|\s)loop_\s+(_name)\s+([\s\S]*?)(?=\s+_\S)/);
+    const loopNameMatch = blockBody.match(/(?<=^|\s)loop_\s+(_name)\s+([\sa-zA-Z0-9_'"]*?)(?=\s+_[a-zA-Z0-9.])/);
     if (loopNameMatch && loopNameMatch[1] == ('_name')) {
       // We're in a loop_ with _name lines
-      let names = loopNameMatch[2].replace(/\s+/g, '\n').replace(/['"]/g, '');
+      let nameLines = loopNameMatch[2].replace(/\s+/g, '\n').replace(/['"]/g, '').split('\n');
 
-      const nameLines = names
-        .split('\n')
-        .map(line => line.trim())
-        .filter(line => line.startsWith("'_") || line.startsWith('"_') || line.startsWith('_'));
-
-        nameLines.map(line => line.replace(/^['"]?/, '').replace(/['"]?$/, '')).forEach(tag => {
+      nameLines.forEach(tag => {
           tags.push(new Tag(tag, blockBody, filePath, lineNumber));
         });
     } else {
       // Try to find a single _name outside of loop_
-      const singleNameMatch = blockBody.match(/(?:^|\s)_name\s+([\s\S]*?)(?=\s+_\S)/);
+      const singleNameMatch = blockBody.match(/(?<=^|\s)_name\s+([\sa-zA-Z0-9_'"]*?)(?=\s+_[a-zA-Z0-9.])/);
       if (singleNameMatch) {
         tags.push(new Tag(singleNameMatch[1].replace(/['"]/g, ''), blockBody, filePath, lineNumber));
       }
@@ -209,13 +204,12 @@ function parseDDL2Dictionary(content: string, filePath: string): Tag[] {
   let tags: Tag[] = []
   let lineLengths = stringToLineLengths(content);
 
-  const saveframeRegex = /(?:^|\s)save(_\S+)\n([\s\S]*?)(?=\nsave_\S+|\n#|\n\s*$)/g;
+  const saveframeRegex = /(?<=^|\s)save(_\S+)([\s\S]*?)save_(?=\s|$)/g;
   let match: RegExpExecArray | null;
 
   while ((match = saveframeRegex.exec(content))) {
+    const fullSaveframe = match[0];
     const saveframeName = match[1];
-    const saveframeBody = match[2];
-    const fullSaveframe = `save${saveframeName}\n${saveframeBody.trim()}`;
     const index = match.index;
     const lineNumber = lineNumberFromIndex(index, lineLengths);
 
@@ -311,7 +305,6 @@ function loadDictionaries(paths: string[], reloadPath: string = "") {
 
       if(remaining == 0) {
         allTags.sort();
-        console.log("Sorted");
       }
 
     });
