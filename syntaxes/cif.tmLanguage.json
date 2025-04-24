@@ -92,6 +92,16 @@
 			"name": "string.unquoted.block.cif",
 			"begin": "^;",
 			"end": "^;"
+		  },
+		  {
+			"name": "string.unquoted.block.cif",
+			"begin": "\"\"\"",
+			"end": "\"\"\""
+		  },
+		  {
+			"name": "string.unquoted.block.cif",
+			"begin": "'''",
+			"end": "'''"
 		  }
 		]
 	  },
