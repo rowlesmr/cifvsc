@@ -6,12 +6,13 @@
   "displayName": "CIF Syntax Support",
   "publisher": "MatthewRowles",
   "description": "Crystallographic Information File",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "icon": "icon.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/rowlesmr/cifvsc"
-  },  "engines": {
+  },
+  "engines": {
     "vscode": "^1.99.0"
   },
   "categories": [
@@ -70,6 +71,6 @@
   },
   "activationEvents": [
     "onLanguage:cif"
-],
-"main": "./out/extension.js"
+  ],
+  "main": "./out/extension.js"
 }
