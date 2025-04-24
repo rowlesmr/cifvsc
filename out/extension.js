@@ -7,28 +7,57 @@ const fs = require("fs");
 const path = require("path");
 const https = require("https");
 let alreadyActivated = false;
+function canonicalLowerCase(str) {
+    return str.normalize('NFD').toLocaleLowerCase().normalize('NFD');
+}
 class Tag {
-    constructor(tagName, definition = "", filePath = "", lineNumber = 0) {
-        this.m_name = tagName;
+    constructor(tagName, definition, filePath, lineNumber) {
+        this.m_name = canonicalLowerCase(tagName);
         this.m_definition = [definition]; // Store definition in an array
-        this.m_location = [new vscode.Location(vscode.Uri.parse(filePath), new vscode.Position(lineNumber, 0))];
+        this.m_location = [new vscode.Location(vscode.Uri.file(filePath), new vscode.Position(lineNumber, 0))];
     }
     // Combine two tags with the same name
     combine(otherTag) {
-        if (this.m_name === otherTag.m_name) {
-            const combinedTag = new Tag(this.m_name); // Start with the first tag's name
-            combinedTag.m_definition = [...this.m_definition, ...otherTag.m_definition];
-            combinedTag.m_location = [...this.m_location, ...otherTag.m_location];
-            return combinedTag;
+        if (this.m_name !== otherTag.m_name) {
+            throw new Error('Cannot combine tags with different names');
         }
-        throw new Error('Cannot combine tags with different names');
+        const combinedTag = Tag.createEmpty(this.m_name);
+        const seen = new Set(); // Use a Set to track unique definition-location pairs
+        // Helper to add unique pairs
+        const addUnique = (definitions, locations) => {
+            for (let i = 0; i < definitions.length; i++) {
+                const key = definitions[i] + '::' + locations[i].uri.fsPath + ':' + locations[i].range.start.line;
+                if (!seen.has(key)) {
+                    seen.add(key);
+                    combinedTag.m_definition.push(definitions[i]);
+                    combinedTag.m_location.push(locations[i]);
+                }
+            }
+        };
+        // Add from both tags
+        addUnique(this.m_definition, this.m_location);
+        addUnique(otherTag.m_definition, otherTag.m_location);
+        return combinedTag;
+    }
+    static createEmpty(name) {
+        const tag = Object.create(Tag.prototype);
+        tag.m_name = name;
+        tag.m_definition = [];
+        tag.m_location = [];
+        return tag;
     }
     // Method to check equality based on name only
     equals(otherTag) {
         return this.m_name === otherTag.m_name; // Tags are equal if their names match
     }
     toString() {
-        return `Tag[name: ${this.m_name}, Definitions: ${this.m_definition.length}, Locations: ${this.m_location.length}]`;
+        const locationStrings = this.m_location.map(loc => {
+            return `${loc.uri.fsPath}:${loc.range.start.line}`;
+        });
+        const definitionLengths = this.m_definition.map(def => {
+            return `${def.length}`;
+        });
+        return `Tag[name: ${this.m_name}, Definitions: [${definitionLengths.join(", ")}], Locations: [${locationStrings.join(", ")}]]`;
     }
     // Comparison method for sorting
     compareTo(otherTag) {
@@ -36,9 +65,7 @@ class Tag {
     }
     // Make the class iterable so you can use array destructuring. is can use a loop like: for (const [name, definitions, locations] of tags)
     *[Symbol.iterator]() {
-        yield this.m_name;
-        yield this.m_definition;
-        yield this.m_location;
+        yield [this.m_name, this.m_definition, this.m_location];
     }
     // Method to check if the tag is in the specified file path
     isInFilePath(filepath) {
@@ -56,22 +83,46 @@ class Tag {
         return this.m_location.map(loc => loc.uri.fsPath); // Map each location to its fsPath and return as an array
     }
     addDefinition(newDefinition, newLocation) {
+        const newKey = newDefinition + '::' + newLocation.uri.fsPath + ':' + newLocation.range.start.line;
+        for (let i = 0; i < this.m_definition.length; i++) {
+            const existingKey = this.m_definition[i] + '::' + this.m_location[i].uri.fsPath + ':' + this.m_location[i].range.start.line;
+            if (existingKey === newKey) {
+                return; // Already exists, do not add again
+            }
+        }
+        // If unique, add
         this.m_definition.push(newDefinition);
         this.m_location.push(newLocation);
+    }
+    hasName(tagName) {
+        return canonicalLowerCase(tagName) === this.m_name;
+    }
+    getName() {
+        return this.m_name;
+    }
+    getDefinition() {
+        return this.m_definition;
+    }
+    getLocation() {
+        return this.m_location;
+    }
+    removeIthDefinitionLocation(i) {
+        this.m_location.splice(i, 1);
+        this.m_definition.splice(i, 1);
     }
 }
 class Tags {
     constructor(tags = []) {
-        this.m_tags = new Map(tags.map(tag => [tag.m_name, tag])); // Map of tag names to tag objects
+        this.m_tags = new Map(tags.map(tag => [tag.getName(), tag])); // Map of tag names to tag objects
     }
     addTag(tag) {
-        if (this.m_tags.has(tag.m_name)) {
-            const existingTag = this.m_tags.get(tag.m_name);
+        if (this.m_tags.has(tag.getName())) {
+            const existingTag = this.m_tags.get(tag.getName());
             const combined = existingTag.combine(tag);
-            this.m_tags.set(tag.m_name, combined);
+            this.m_tags.set(tag.getName(), combined);
         }
         else {
-            this.m_tags.set(tag.m_name, tag);
+            this.m_tags.set(tag.getName(), tag);
         }
     }
     addTags(tags) {
@@ -87,25 +138,24 @@ class Tags {
     }
     getTagDefinition(tag) {
         var _a;
-        return (_a = this.m_tags.get(tag)) === null || _a === void 0 ? void 0 : _a.m_definition;
+        return (_a = this.m_tags.get(canonicalLowerCase(tag))) === null || _a === void 0 ? void 0 : _a.getDefinition();
     }
     getTagLocation(tag) {
         var _a;
-        return (_a = this.m_tags.get(tag)) === null || _a === void 0 ? void 0 : _a.m_location;
+        return (_a = this.m_tags.get(canonicalLowerCase(tag))) === null || _a === void 0 ? void 0 : _a.getLocation();
     }
     removeTagsFromFilePath(filePath) {
         const uriToRemove = vscode.Uri.file(filePath);
         // First pass: Iterate through the Map entries (key-value pairs)
         for (const [key, tag] of this.m_tags) {
             // Iterate over the locations in reverse order
-            for (let i = tag.m_location.length - 1; i >= 0; i--) {
-                if (tag.m_location[i].uri.fsPath === uriToRemove.fsPath) {
-                    tag.m_location.splice(i, 1);
-                    tag.m_definition.splice(i, 1);
+            for (let i = tag.getLocation().length - 1; i >= 0; i--) {
+                if (tag.getLocation()[i].uri.fsPath === uriToRemove.fsPath) {
+                    tag.removeIthDefinitionLocation(i);
                 }
             }
             // If the tag has no definitions or locations left, remove it from the Map
-            if (tag.m_definition.length === 0) {
+            if (tag.getDefinition().length === 0) {
                 this.m_tags.delete(key);
             }
         }
@@ -163,9 +213,8 @@ function parseDDL2Dictionary(content, filePath) {
     const saveframeRegex = /(?<=^|\s)save(_\S+)([\s\S]*?)save_(?=\s|$)/g;
     let match;
     while ((match = saveframeRegex.exec(content))) {
+        const fullSaveframe = match[0];
         const saveframeName = match[1];
-        const saveframeBody = match[2];
-        const fullSaveframe = `save${saveframeName}\n${saveframeBody.trim()}`;
         const index = match.index;
         const lineNumber = lineNumberFromIndex(index, lineLengths);
         tags.push(new Tag(saveframeName, fullSaveframe, filePath, lineNumber));
@@ -215,11 +264,11 @@ function parseDictionary(content, filePath) {
 function loadDictionaries(paths, reloadPath = "") {
     //a hack to reload a dictionary upon the file changing
     if (reloadPath == "") { //then it's a normal reload everything
-        console.log("Loading dictionaries...");
+        //console.log("Loading dictionaries...");
         allTags.clear();
     }
     else {
-        console.log(`Reloading dictionary: ${reloadPath}`);
+        //console.log(`Reloading dictionary: ${reloadPath}`);
         allTags.removeTagsFromFilePath(reloadPath);
         paths = [reloadPath]; //so I don't need to change the remaining code
     }
@@ -230,21 +279,20 @@ function loadDictionaries(paths, reloadPath = "") {
                 vscode.window.showErrorMessage(`Failed to load CIF dictionary: ${dictPath}\n${err.message}.`);
                 return;
             }
-            console.log(`Dictionary loaded, parsing file: ${dictPath}.`);
+            //console.log(`Dictionary loaded, parsing file: ${dictPath}.`);
             // Normalize all line endings to \n to simplify regex
             data = data.replace(/\r\n?/g, '\n');
             let newTags = parseDictionary(data, dictPath);
-            console.log(`Parsed dictionary, found ${newTags.length} tags.`);
+            //console.log(`Parsed dictionary, found ${newTags.length} tags.`);
             allTags.addTags(newTags);
-            console.log(`Loaded CIF dictionary: ${path.basename(dictPath)}`);
+            //console.log(`Loaded CIF dictionary: ${path.basename(dictPath)}`);
             remaining--;
             if (remaining == 0) {
                 allTags.sort();
-                console.log("Sorted");
             }
         });
     });
-    console.log(`Loaded all dictionaries.`);
+    //console.log(`Loaded all dictionaries.`);
 }
 function consolidateDuplicates(alltags) {
     alltags.sort((tag1, tag2) => tag1.compareTo(tag2));
@@ -275,19 +323,19 @@ function watchDictionaryFiles() {
         //const watcher = vscode.workspace.createFileSystemWatcher(uri.fsPath);
         const watcher = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(path.dirname(dictPath), path.basename(dictPath)));
         watcher.onDidChange(() => {
-            console.log(`Dictionary file changed: ${dictPath}`);
+            //console.log(`Dictionary file changed: ${dictPath}`);
             loadDictionaries([], dictPath); // Reload just this file
         });
         watcher.onDidCreate(() => {
-            console.log(`Dictionary file created: ${dictPath}`);
+            //console.log(`Dictionary file created: ${dictPath}`);
             loadDictionaries([], dictPath);
         });
         watcher.onDidDelete(() => {
-            console.log(`Dictionary file deleted: ${dictPath}`);
+            //console.log(`Dictionary file deleted: ${dictPath}`);
             // Optionally remove data related to this file if needed
             loadDictionaries([], dictPath);
         });
-        console.log(`Watching file: ${dictPath}`);
+        //console.log(`Watching file: ${dictPath}`);
     });
 }
 /**
@@ -351,7 +399,7 @@ function downloadFile(url, directory, filename) {
             response.pipe(fileStream);
             fileStream.on('finish', () => {
                 fileStream.close();
-                console.log(`Downloaded and saved ${filename} to ${filePath}`);
+                //console.log(`Downloaded and saved ${filename} to ${filePath}`);
                 resolve();
             });
             fileStream.on('error', (err) => {
@@ -427,7 +475,10 @@ function activate(context) {
             if (saveframes.length > 1) {
                 saveframes.forEach((definition, index) => {
                     const file = locations[index].uri.fsPath; // Access the second array using the same index
-                    hoverText += `${file}\n${definition}\n\n---\n\n`;
+                    hoverText += `${file}\n${definition}`;
+                    if (index < locations.length - 1) {
+                        hoverText += "\n\n---\n\n";
+                    }
                 });
             }
             else {
@@ -460,7 +511,15 @@ function activate(context) {
     }, '_'); // Trigger on '_' character, adjust this as needed
     // Add to subscriptions to handle cleanup on deactivation
     context.subscriptions.push(completionProvider);
-    console.log("End of activation.");
+    // Register the new command
+    let disposable = vscode.commands.registerCommand('cifTools.showAllTags', () => {
+        vscode.window.showInformationMessage('Check console for all tags.');
+        console.log('All Tags written to file.');
+        //console.log(allTags.toString()); // Display tags in console
+        fs.writeFileSync('C:/Users/User/Documents/github/cifvsc/debug-tag-output.txt', allTags.toString());
+    });
+    context.subscriptions.push(disposable); // Clean up when extension is deactivated
+    //console.log("End of activation.");
 }
 /**
  * Optional: clean up when extension deactivates
