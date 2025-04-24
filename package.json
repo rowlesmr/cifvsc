@@ -4,10 +4,13 @@
   },
   "name": "cif",
   "displayName": "CIF",
-  "publisher": "Matthew Rowles",
+  "publisher": "MatthewRowles",
   "description": "Crystallographic Information File",
-  "version": "0.0.2",
-  "engines": {
+  "version": "0.1.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rowlesmr/cifvsc"
+  },  "engines": {
     "vscode": "^1.99.0"
   },
   "categories": [

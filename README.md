@@ -1,4 +1,4 @@
-# CIF Syntax Highlighter
+# CIF Syntax Highlighter and more
 
 This Visual Studio Code extension provides syntax highlighting support for Crystallographic Information Files (CIF), including `.cif` and `.dic` files.
 
@@ -24,21 +24,27 @@ This Visual Studio Code extension provides syntax highlighting support for Cryst
 To use the CIF extension, specify the dictionary file paths in your `settings.json`:
 
 ```json
-{
   "cifTools.dictionaryPaths": [
     "path/to/dictionary1.dic",
     "path/to/dictionary2.dic"
   ]
-}
 ```
 
-The recommended minimum file are:
+For DDL1 dictionaries, the recommended minimum files are:
+- [cif_core.dic](https://github.com/COMCIFS/DDL1-legacy-dictionaries/raw/refs/heads/main/dictionaries/cif_core.dic)
+- [ddl_core.dic](https://github.com/COMCIFS/DDL1-legacy-dictionaries/raw/refs/heads/main/dictionaries/ddl_core.dic)
+
+Additionally, if working with powder diffraction files, include the following:
+- [cif_pd.dic](https://github.com/COMCIFS/DDL1-legacy-dictionaries/raw/refs/heads/main/dictionaries/cif_pd.dic)
+
+
+For DDL2 dictionaries, the recommended minimum files are:
 - [cif_core.dic](https://github.com/COMCIFS/cif_core/raw/refs/heads/master/cif_core.dic)
 - [ddl.dic](https://github.com/COMCIFS/cif_core/raw/refs/heads/master/ddl.dic)
 - [templ_attr.cif](https://github.com/COMCIFS/cif_core/raw/refs/heads/master/templ_attr.cif)
 - [templ_enum.cif](https://github.com/COMCIFS/cif_core/raw/refs/heads/master/templ_enum.cif)
 
-Additionally, if working with powder diffraction files, include
+Additionally, if working with powder diffraction files, include the following, noting that they are drafts:
 - [cif_pow.dic](https://github.com/COMCIFS/Powder_Dictionary/raw/refs/heads/master/cif_pow.dic)
 - [multi_block_core.dic](https://github.com/COMCIFS/MultiBlock_Dictionary/raw/refs/heads/main/multi_block_core.dic)
 
