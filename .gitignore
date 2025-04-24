@@ -1,0 +1,28 @@
+# Ignore the out directory
+/out
+
+# Ignore node_modules directory
+/node_modules
+
+# Ignore TypeScript compiled files
+*.js
+*.js.map
+
+# Ignore VS Code extension build output
+.vscode/
+
+# Ignore VS Code extensions packaging artifacts
+*.vsix
+
+# Ignore log files
+*.log
+
+# Ignore settings and temporary files
+.vscode-test
+*.swp
+
+# Ignore macOS Finder directory files
+.DS_Store
+
+# Ignore Windows thumbs.db files
+Thumbs.db
