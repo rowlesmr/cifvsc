@@ -2,22 +2,38 @@
 
 This Visual Studio Code extension provides syntax highlighting support for Crystallographic Information Files (CIF), including `.cif` and `.dic` files.
 
+[![GitHub](https://img.shields.io/badge/GitHub-rowlesmr%2Fcifvsc-blue?logo=github)](https://github.com/rowlesmr/cifvsc)
+
+## Contributing
+
+Found a bug or have a feature request? Open an issue or submit a pull request on [GitHub](https://github.com/rowlesmr/cifvsc).
+
 ## Features
 
-- Syntax highlighting for CIF tags and data blocks
-- Save frame recognition
+- Syntax highlighting for CIF tags, data blocks, save frames, strings, and comments
 - Designed for working with CIF dictionaries and data files
-- Hover text containing tag definition
-- Auto-complete suggestions for tags
+- Hover text for tags showing tag definition from loaded dictionaries
+- Auto-complete CIF tags based on loaded dictionaries
 
 ## File Extensions Supported
 
 - `.cif`
 - `.dic`
 
+## Preview
+
+Here's what CIF syntax highlighting looks like in VS Code:
+
+![screenshot](https://raw.githubusercontent.com/rowlesmr/cifvsc/main/assets/syntax-preview.png)
+
+Here's what CIF hover text looks like in VS Code:
+
+![screenshot](https://raw.githubusercontent.com/rowlesmr/cifvsc/main/assets/hover_text.png)
+
+
 ## Future Ideas
 
-- Give me some ideas!
+- 💡 Have an idea? Open a feature request [here](https://github.com/rowlesmr/cifvsc/issues)!
 
 # Configuration
 
@@ -82,3 +98,4 @@ Then:
 2. Type and select:  `Extensions: Install from VSIX...`
 3. Choose the `.vsix` file from your system.
 4. Wait for the installation to finish and reload if prompted.
+

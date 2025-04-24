@@ -163,9 +163,8 @@ function parseDDL2Dictionary(content, filePath) {
     const saveframeRegex = /(?<=^|\s)save(_\S+)([\s\S]*?)save_(?=\s|$)/g;
     let match;
     while ((match = saveframeRegex.exec(content))) {
+        const fullSaveframe = match[0];
         const saveframeName = match[1];
-        const saveframeBody = match[2];
-        const fullSaveframe = `save${saveframeName}\n${saveframeBody.trim()}`;
         const index = match.index;
         const lineNumber = lineNumberFromIndex(index, lineLengths);
         tags.push(new Tag(saveframeName, fullSaveframe, filePath, lineNumber));
@@ -240,7 +239,6 @@ function loadDictionaries(paths, reloadPath = "") {
             remaining--;
             if (remaining == 0) {
                 allTags.sort();
-                console.log("Sorted");
             }
         });
     });
