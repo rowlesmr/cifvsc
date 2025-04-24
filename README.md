@@ -1,6 +1,6 @@
 # CIF Syntax Highlighter and more
 
-[![Visual Studio Marketplace](https://img.shields.io/visual-studio-marketplace/v/MatthewRowles.cif?color=blue&label=Marketplace&logo=visualstudiocode)](https://marketplace.visualstudio.com/items?itemName=MatthewRowles.cif)
+[![Visual Studio Marketplace](https://img.shields.io/badge/VS%20Marketplace-MatthewRowles%2Fcifvsc-blue?logo=visualstudiocode)](https://marketplace.visualstudio.com/items?itemName=MatthewRowles.cifvsc)
 [![GitHub](https://img.shields.io/badge/GitHub-rowlesmr%2Fcifvsc-blue?logo=github)](https://github.com/rowlesmr/cifvsc)
 
 The CIF extension helps crystallographers and materials scientists work more efficiently with `.cif` and `.dic` files by providing syntax highlighting, hover tooltips, and intelligent auto-completion inside Visual Studio Code.
