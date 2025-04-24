@@ -39,7 +39,27 @@ Here's what the CIF hover text looks like in VS Code:
 
 # Configuration
 
-To use the CIF extension, specify the dictionary file paths in your `settings.json`:
+A minimal set of CIF dictionary files are provided. These include
+
+DDL1 dictionaries:
+- [cif_core.dic](https://github.com/COMCIFS/DDL1-legacy-dictionaries/raw/refs/heads/main/dictionaries/cif_core.dic)
+- [ddl_core.dic](https://github.com/COMCIFS/DDL1-legacy-dictionaries/raw/refs/heads/main/dictionaries/ddl_core.dic)
+- [cif_pd.dic](https://github.com/COMCIFS/DDL1-legacy-dictionaries/raw/refs/heads/main/dictionaries/cif_pd.dic)
+
+DDL2 dictionary:
+- [mmcif_pdbx_v50.dic](https://mmcif.wwpdb.org/dictionaries/ascii/mmcif_pdbx_v50.dic)
+- [mmcif_ddl.dic](https://mmcif.wwpdb.org/dictionaries/ascii/mmcif_ddl.dic)
+
+DDLm dictionaries:
+- [cif_core.dic](https://github.com/COMCIFS/cif_core/raw/refs/heads/master/cif_core.dic)
+- [ddl.dic](https://github.com/COMCIFS/cif_core/raw/refs/heads/master/ddl.dic)
+- [templ_attr.cif](https://github.com/COMCIFS/cif_core/raw/refs/heads/master/templ_attr.cif)
+- [templ_enum.cif](https://github.com/COMCIFS/cif_core/raw/refs/heads/master/templ_enum.cif)
+- [cif_pow.dic](https://github.com/COMCIFS/Powder_Dictionary/raw/refs/heads/master/cif_pow.dic)
+- [multi_block_core.dic](https://github.com/COMCIFS/MultiBlock_Dictionary/raw/refs/heads/main/multi_block_core.dic)
+
+
+If you want to use your own, customised set of dictionaries, you can specify them in your `settings.json`:
 
 ```json
   "cifTools.dictionaryPaths": [
@@ -48,25 +68,9 @@ To use the CIF extension, specify the dictionary file paths in your `settings.js
   ]
 ```
 
-For DDL1 dictionaries, the recommended minimum files are:
-- [cif_core.dic](https://github.com/COMCIFS/DDL1-legacy-dictionaries/raw/refs/heads/main/dictionaries/cif_core.dic)
-- [ddl_core.dic](https://github.com/COMCIFS/DDL1-legacy-dictionaries/raw/refs/heads/main/dictionaries/ddl_core.dic)
+Specifying your own dictionaries will override all default dictionaries.
 
-Additionally, if working with powder diffraction files, include the following:
-- [cif_pd.dic](https://github.com/COMCIFS/DDL1-legacy-dictionaries/raw/refs/heads/main/dictionaries/cif_pd.dic)
-
-
-For DDLm dictionaries, the recommended minimum files are:
-- [cif_core.dic](https://github.com/COMCIFS/cif_core/raw/refs/heads/master/cif_core.dic)
-- [ddl.dic](https://github.com/COMCIFS/cif_core/raw/refs/heads/master/ddl.dic)
-- [templ_attr.cif](https://github.com/COMCIFS/cif_core/raw/refs/heads/master/templ_attr.cif)
-- [templ_enum.cif](https://github.com/COMCIFS/cif_core/raw/refs/heads/master/templ_enum.cif)
-
-Additionally, if working with powder diffraction files, include the following, noting that they are drafts:
-- [cif_pow.dic](https://github.com/COMCIFS/Powder_Dictionary/raw/refs/heads/master/cif_pow.dic)
-- [multi_block_core.dic](https://github.com/COMCIFS/MultiBlock_Dictionary/raw/refs/heads/main/multi_block_core.dic)
-
-See the [COMCIFS github](https://github.com/COMCIFS) for other available dictionaries.
+See the [COMCIFS github](https://github.com/COMCIFS) or [PDBx/mmCIF Dictionary Resources](https://mmcif.wwpdb.org/dictionaries/downloads.html) for other available dictionaries.
 
 ## License
 

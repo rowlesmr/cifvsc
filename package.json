@@ -5,7 +5,7 @@
   "name": "cifvsc",
   "displayName": "CIF Syntax Support",
   "publisher": "MatthewRowles",
-  "description": "Crystallographic Information File",
+  "description": "Crystallographic Information File (CIF)",
   "version": "0.1.1",
   "icon": "icon.png",
   "repository": {
@@ -17,6 +17,15 @@
   },
   "categories": [
     "Programming Languages"
+  ],
+  "files": [
+    "out",
+    "dictionaries",
+    "syntaxes",
+    "language-configuration.json",
+    "icon.png",
+    "README.md",
+    "LICENSE"
   ],
   "contributes": {
     "commands": [
