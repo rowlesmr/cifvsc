@@ -75,6 +75,33 @@ See the [COMCIFS github](https://github.com/COMCIFS) for other available diction
 
 ## Installation
 
+### 🌐 Install from the Visual Studio Code Marketplace
+
+The easiest way to install **CIF Syntax Support** is directly from the Visual Studio Code Marketplace.
+
+#### Option 1: Using the Extensions View
+
+1. Open **Visual Studio Code**.
+2. Go to the **Extensions** view:
+   - Click the Extensions icon in the Activity Bar on the side.
+   - Or press `Ctrl+Shift+X` (Windows/Linux) or `Cmd+Shift+X` (macOS).
+3. In the **search bar**, type:
+   ```
+   CIF Syntax Support
+   ```
+4. Look for the extension by **MatthewRowles** and click **Install**.
+
+#### Option 2: Install via Command Palette
+
+1. Open the **Command Palette** (`Ctrl+Shift+P` or `Cmd+Shift+P`).
+2. Type and select:
+   ```
+   Extensions: Install Extensions
+   ```
+3. Search for `CIF Syntax Support` and click **Install**.
+
+Or visit the [Visual Studio Marketplace page](https://marketplace.visualstudio.com/items?itemName=MatthewRowles.cifvsc) to install it directly.
+
 ### 🛠️ Manual Installation from VSIX File
 
 If you have a `.vsix` file (e.g., provided via email, GitHub release, or another source), you can manually install the extension in Visual Studio Code.
@@ -82,7 +109,7 @@ If you have a `.vsix` file (e.g., provided via email, GitHub release, or another
 #### Download the `.vsix` file from Github
 
 - Visit the **[Releases](https://github.com/rowlesmr/cifvsc)** page.
-- Download the latest `.vsix` file (it will look like `cif-x.y.z.vsix`).
+- Download the latest `.vsix` file (it will look like `cifvsc-x.y.z.vsix`).
 
 Then:
 
