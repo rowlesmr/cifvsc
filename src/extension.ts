@@ -512,7 +512,7 @@ export function activate(context: vscode.ExtensionContext) {
   }
   alreadyActivated = true;
 
-  vscode.window.showInformationMessage('CIF Extension activated. DEV');
+  vscode.window.showInformationMessage('CIF Extension activated.');
   const config = vscode.workspace.getConfiguration('cifTools');
   const dictPaths = config.get<string[]>('dictionaryPaths') || [];
 
@@ -561,7 +561,7 @@ export function activate(context: vscode.ExtensionContext) {
   //to allow hover text to work
   const hoverProvider = vscode.languages.registerHoverProvider('cif', {
     provideHover(document, position, token) {
-      const range = document.getWordRangeAtPosition(position, /_[\w\d.]+/);
+      const range = document.getWordRangeAtPosition(position, /_[\w\d.-]+/);
       if (!range) return;
 
       const tagName = document.getText(range);
@@ -593,7 +593,7 @@ export function activate(context: vscode.ExtensionContext) {
   //to allow jump-to-definition to work
   const definitionProvider = vscode.languages.registerDefinitionProvider('cif', {
     provideDefinition(document, position, token) {
-      const range = document.getWordRangeAtPosition(position, /_[\w\d.]+/);
+      const range = document.getWordRangeAtPosition(position, /_[\w\d.-]+/);
       if (!range) return;
 
       const tagName = document.getText(range);
@@ -622,7 +622,7 @@ export function activate(context: vscode.ExtensionContext) {
       vscode.window.showInformationMessage('Check console for all tags.');
       console.log('All Tags written to file.');
       //console.log(allTags.toString()); // Display tags in console
-      fs.writeFileSync('C:/Users/User/Documents/github/cifvsc/debug-tag-output.txt', allTags.toString());
+      fs.writeFileSync('debug-tag-output.txt', allTags.toString());
   });
   context.subscriptions.push(disposable); // Clean up when extension is deactivated
 
