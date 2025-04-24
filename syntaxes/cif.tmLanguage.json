@@ -25,7 +25,7 @@
 		"patterns": [
 		  {
 			"name": "keyword.control.data-block.cif",
-			"match": "\\bdata_[A-Za-z0-9_.\u00A0-\uD7FF\uE000-\uFDCF\uFDF0-\uFFFD\u10000-\u1FFFD\u20000-\u2FFFD\u30000-\u3FFFD\u40000-\u4FFFD\u50000-\u5FFFD\u60000-\u6FFFD\u70000-\u7FFFD\u80000-\u8FFFD\u90000-\u9FFFD\uA0000-\uAFFFD\uB0000-\uBFFFD\uC0000-\uCFFFD\uD0000-\uDFFFD\uE0000-\uEFFFD\uF0000-\uFFFFD\u100000-\u10FFFD&&[^@#\\x00-\\x20\\x7F]]+"
+			"match": "\\bdata_[-A-Za-z0-9_.\u00A0-\uD7FF\uE000-\uFDCF\uFDF0-\uFFFD\u10000-\u1FFFD\u20000-\u2FFFD\u30000-\u3FFFD\u40000-\u4FFFD\u50000-\u5FFFD\u60000-\u6FFFD\u70000-\u7FFFD\u80000-\u8FFFD\u90000-\u9FFFD\uA0000-\uAFFFD\uB0000-\uBFFFD\uC0000-\uCFFFD\uD0000-\uDFFFD\uE0000-\uEFFFD\uF0000-\uFFFFD\u100000-\u10FFFD&&[^@#\\x00-\\x20\\x7F]]+"
 		  }
 		]
 	  },
@@ -33,7 +33,7 @@
 		"patterns": [
 		  {
 			"name": "meta.block.save.cif",
-			"begin": "\\bsave_[A-Za-z0-9_.\u00A0-\uD7FF\uE000-\uFDCF\uFDF0-\uFFFD\u10000-\u1FFFD\u20000-\u2FFFD\u30000-\u3FFFD\u40000-\u4FFFD\u50000-\u5FFFD\u60000-\u6FFFD\u70000-\u7FFFD\u80000-\u8FFFD\u90000-\u9FFFD\uA0000-\uAFFFD\uB0000-\uBFFFD\uC0000-\uCFFFD\uD0000-\uDFFFD\uE0000-\uEFFFD\uF0000-\uFFFFD\u100000-\u10FFFD&&[^@#\\x00-\\x20\\x7F]]+",
+			"begin": "\\bsave_[-A-Za-z0-9_.\u00A0-\uD7FF\uE000-\uFDCF\uFDF0-\uFFFD\u10000-\u1FFFD\u20000-\u2FFFD\u30000-\u3FFFD\u40000-\u4FFFD\u50000-\u5FFFD\u60000-\u6FFFD\u70000-\u7FFFD\u80000-\u8FFFD\u90000-\u9FFFD\uA0000-\uAFFFD\uB0000-\uBFFFD\uC0000-\uCFFFD\uD0000-\uDFFFD\uE0000-\uEFFFD\uF0000-\uFFFFD\u100000-\u10FFFD&&[^@#\\x00-\\x20\\x7F]]+",
 			"beginCaptures": {
 			  "0": {
 				"name": "keyword.control.save-frame.cif"

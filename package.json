@@ -2,12 +2,16 @@
   "scripts": {
     "compile": "tsc -p ./"
   },
-  "name": "cif",
-  "displayName": "CIF",
-  "publisher": "Matthew Rowles",
+  "name": "cifvsc",
+  "displayName": "CIF Syntax Support",
+  "publisher": "MatthewRowles",
   "description": "Crystallographic Information File",
-  "version": "0.0.2",
-  "engines": {
+  "version": "0.1.0",
+  "icon": "icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rowlesmr/cifvsc"
+  },  "engines": {
     "vscode": "^1.99.0"
   },
   "categories": [
