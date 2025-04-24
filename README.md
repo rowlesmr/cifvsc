@@ -1,8 +1,10 @@
 # CIF Syntax Highlighter and more
 
-This Visual Studio Code extension provides syntax highlighting support for Crystallographic Information Files (CIF), including `.cif` and `.dic` files.
-
+[![Visual Studio Marketplace](https://img.shields.io/visual-studio-marketplace/v/MatthewRowles.cif?color=blue&label=Marketplace&logo=visualstudiocode)](https://marketplace.visualstudio.com/items?itemName=MatthewRowles.cif)
 [![GitHub](https://img.shields.io/badge/GitHub-rowlesmr%2Fcifvsc-blue?logo=github)](https://github.com/rowlesmr/cifvsc)
+
+The CIF extension helps crystallographers and materials scientists work more efficiently with `.cif` and `.dic` files by providing syntax highlighting, hover tooltips, and intelligent auto-completion inside Visual Studio Code.
+
 
 ## Contributing
 
@@ -26,7 +28,7 @@ Here's what CIF syntax highlighting looks like in VS Code:
 
 ![screenshot](https://raw.githubusercontent.com/rowlesmr/cifvsc/main/assets/syntax-preview.png)
 
-Here's what CIF hover text looks like in VS Code:
+Here's what the CIF hover text looks like in VS Code:
 
 ![screenshot](https://raw.githubusercontent.com/rowlesmr/cifvsc/main/assets/hover_text.png)
 
@@ -66,6 +68,10 @@ Additionally, if working with powder diffraction files, include the following, n
 
 See the [COMCIFS github](https://github.com/COMCIFS) for other available dictionaries.
 
+## License
+
+[MIT](LICENSE)
+
 
 ## Installation
 
@@ -76,7 +82,7 @@ If you have a `.vsix` file (e.g., provided via email, GitHub release, or another
 #### Download the `.vsix` file from Github
 
 - Visit the **[Releases](https://github.com/rowlesmr/cifvsc)** page.
-- Download the latest `.vsix` file (it will look like `cif-0.0.1.vsix`).
+- Download the latest `.vsix` file (it will look like `cif-x.y.z.vsix`).
 
 Then:
 
