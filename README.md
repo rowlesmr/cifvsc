@@ -56,7 +56,7 @@ Additionally, if working with powder diffraction files, include the following:
 - [cif_pd.dic](https://github.com/COMCIFS/DDL1-legacy-dictionaries/raw/refs/heads/main/dictionaries/cif_pd.dic)
 
 
-For DDL2 dictionaries, the recommended minimum files are:
+For DDLm dictionaries, the recommended minimum files are:
 - [cif_core.dic](https://github.com/COMCIFS/cif_core/raw/refs/heads/master/cif_core.dic)
 - [ddl.dic](https://github.com/COMCIFS/cif_core/raw/refs/heads/master/ddl.dic)
 - [templ_attr.cif](https://github.com/COMCIFS/cif_core/raw/refs/heads/master/templ_attr.cif)
