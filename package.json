@@ -22,6 +22,10 @@
       {
         "command": "extension.hover",
         "title": "Show Hover"
+      },
+      {
+        "command": "cifTools.showAllTags",
+        "title": "Show All Tags"
       }
     ],
     "languages": [

@@ -6,29 +6,58 @@ import * as https from 'https';
 let alreadyActivated = false;
 
 
-
+function canonicalLowerCase(str: string): string {
+  return str.normalize('NFD').toLocaleLowerCase().normalize('NFD');
+}
 
 class Tag {
-  m_name: string;
-  m_definition: string[];
-  m_location: vscode.Location[];
+  private m_name: string;
+  private m_definition: string[];
+  private m_location: vscode.Location[];
 
-  constructor(tagName: string, definition: string="", filePath: string = "", lineNumber: number=0)
+  constructor(tagName: string, definition: string, filePath: string, lineNumber: number)
   {
-    this.m_name = tagName;
+    this.m_name = canonicalLowerCase(tagName);
     this.m_definition = [definition];  // Store definition in an array
-    this.m_location = [new vscode.Location(vscode.Uri.parse(filePath), new vscode.Position(lineNumber, 0))];
+    this.m_location = [new vscode.Location(vscode.Uri.file(filePath), new vscode.Position(lineNumber, 0))];
   }
 
   // Combine two tags with the same name
   combine(otherTag: Tag): Tag {
-    if (this.m_name === otherTag.m_name) {
-      const combinedTag = new Tag(this.m_name);  // Start with the first tag's name
-      combinedTag.m_definition = [...this.m_definition, ...otherTag.m_definition];
-      combinedTag.m_location = [...this.m_location, ...otherTag.m_location];
-      return combinedTag;
+    if (this.m_name !== otherTag.m_name) {
+      throw new Error('Cannot combine tags with different names');
     }
-    throw new Error('Cannot combine tags with different names');
+
+    const combinedTag = Tag.createEmpty(this.m_name);
+
+    const seen = new Set<string>(); // Use a Set to track unique definition-location pairs
+
+    // Helper to add unique pairs
+    const addUnique = (definitions: string[], locations: vscode.Location[]) => {
+      for (let i = 0; i < definitions.length; i++) {
+        const key = definitions[i] + '::' + locations[i].uri.fsPath + ':' + locations[i].range.start.line;
+
+        if (!seen.has(key)) {
+          seen.add(key);
+          combinedTag.m_definition.push(definitions[i]);
+          combinedTag.m_location.push(locations[i]);
+        }
+      }
+    };
+
+    // Add from both tags
+    addUnique(this.m_definition, this.m_location);
+    addUnique(otherTag.m_definition, otherTag.m_location);
+
+    return combinedTag;
+  }
+
+  private static createEmpty(name: string): Tag {
+    const tag = Object.create(Tag.prototype) as Tag;
+    tag.m_name = name;
+    tag.m_definition = [];
+    tag.m_location = [];
+    return tag;
   }
 
   // Method to check equality based on name only
@@ -37,7 +66,14 @@ class Tag {
   }
 
   toString(): string {
-    return `Tag[name: ${this.m_name}, Definitions: ${this.m_definition.length}, Locations: ${this.m_location.length}]`;
+    const locationStrings = this.m_location.map(loc => {
+      return `${loc.uri.fsPath}:${loc.range.start.line}`;
+    });
+    const definitionLengths = this.m_definition.map(def => {
+      return `${def.length}`;
+    });
+
+    return `Tag[name: ${this.m_name}, Definitions: [${definitionLengths.join(", ")}], Locations: [${locationStrings.join(", ")}]]`;
   }
 
   // Comparison method for sorting
@@ -46,10 +82,8 @@ class Tag {
   }
 
   // Make the class iterable so you can use array destructuring. is can use a loop like: for (const [name, definitions, locations] of tags)
-  *[Symbol.iterator](): IterableIterator<any> {
-    yield this.m_name;
-    yield this.m_definition;
-    yield this.m_location;
+  *[Symbol.iterator](): IterableIterator<[string, string[], vscode.Location[]]> {
+    yield [this.m_name, this.m_definition, this.m_location];
   }
 
   // Method to check if the tag is in the specified file path
@@ -71,8 +105,39 @@ class Tag {
   }
 
   addDefinition(newDefinition: string, newLocation: vscode.Location): void {
+    const newKey = newDefinition + '::' + newLocation.uri.fsPath + ':' + newLocation.range.start.line;
+
+    for (let i = 0; i < this.m_definition.length; i++) {
+      const existingKey = this.m_definition[i] + '::' + this.m_location[i].uri.fsPath + ':' + this.m_location[i].range.start.line;
+      if (existingKey === newKey) {
+        return; // Already exists, do not add again
+      }
+    }
+
+    // If unique, add
     this.m_definition.push(newDefinition);
     this.m_location.push(newLocation);
+  }
+
+  hasName(tagName: string) : boolean{
+    return canonicalLowerCase(tagName) === this.m_name;
+  }
+
+  getName(): string {
+    return this.m_name;
+  }
+
+  getDefinition(): string[] {
+    return this.m_definition;
+  }
+
+  getLocation(): vscode.Location[] {
+    return this.m_location;
+  }
+
+  removeIthDefinitionLocation(i: number) : void {
+    this.m_location.splice(i, 1);
+    this.m_definition.splice(i, 1);
   }
 }
 
@@ -81,16 +146,16 @@ class Tags implements Iterable<Tag> {
   private m_tags: Map<string, Tag>;
 
   constructor(tags: Tag[] = []) {
-    this.m_tags = new Map(tags.map(tag => [tag.m_name, tag])); // Map of tag names to tag objects
+    this.m_tags = new Map(tags.map(tag => [tag.getName(), tag])); // Map of tag names to tag objects
   }
 
   addTag(tag: Tag): void {
-    if (this.m_tags.has(tag.m_name)) {
-      const existingTag = this.m_tags.get(tag.m_name)!;
+    if (this.m_tags.has(tag.getName())) {
+      const existingTag = this.m_tags.get(tag.getName())!;
       const combined = existingTag.combine(tag);
-      this.m_tags.set(tag.m_name, combined);
+      this.m_tags.set(tag.getName(), combined);
     } else {
-      this.m_tags.set(tag.m_name, tag);
+      this.m_tags.set(tag.getName(), tag);
     }
   }
 
@@ -109,11 +174,11 @@ class Tags implements Iterable<Tag> {
   }
 
   getTagDefinition(tag:string): string[] | undefined {
-    return this.m_tags.get(tag)?.m_definition
+    return this.m_tags.get(canonicalLowerCase(tag))?.getDefinition();
   }
 
   getTagLocation(tag:string): vscode.Location[] | undefined {
-    return this.m_tags.get(tag)?.m_location
+    return this.m_tags.get(canonicalLowerCase(tag))?.getLocation();
   }
 
   removeTagsFromFilePath(filePath: string): void {
@@ -122,15 +187,14 @@ class Tags implements Iterable<Tag> {
     // First pass: Iterate through the Map entries (key-value pairs)
     for (const [key, tag] of this.m_tags) {
       // Iterate over the locations in reverse order
-      for (let i = tag.m_location.length - 1; i >= 0; i--) {
-        if (tag.m_location[i].uri.fsPath === uriToRemove.fsPath) {
-          tag.m_location.splice(i, 1);
-          tag.m_definition.splice(i, 1);
+      for (let i = tag.getLocation().length - 1; i >= 0; i--) {
+        if (tag.getLocation()[i].uri.fsPath === uriToRemove.fsPath) {
+          tag.removeIthDefinitionLocation(i);
         }
       }
 
       // If the tag has no definitions or locations left, remove it from the Map
-      if (tag.m_definition.length === 0) {
+      if (tag.getDefinition().length === 0) {
         this.m_tags.delete(key);
       }
     }
@@ -147,7 +211,7 @@ class Tags implements Iterable<Tag> {
     return Array.from(this.m_tags.values()).map(tag => tag.toString()).join('\n');
   }
 
-  // ✅ Iterable implementation
+  // Iterable implementation
   [Symbol.iterator](): Iterator<Tag> {
     return this.m_tags.values()[Symbol.iterator]();
   }
@@ -170,7 +234,7 @@ function parseDDL1Dictionary(content: string, filePath: string): Tag[] {
   let tags: Tag[] = []
   let lineLengths = stringToLineLengths(content);
 
-  const blockRegex = /(?<=^|\s)(data_([a-zA-Z0-9_.]+)\s[\s\S]*?)(?=\sdata_[a-zA-Z0-9_.]+|$)/g;
+  const blockRegex = /(?<=^|\s)(data_([a-zA-Z0-9_.-]+)\s[\s\S]*?)(?=\sdata_[a-zA-Z0-9_.-]+|$)/g;
   let match: RegExpExecArray | null;
 
   while ((match = blockRegex.exec(content))) {
@@ -179,7 +243,7 @@ function parseDDL1Dictionary(content: string, filePath: string): Tag[] {
     const lineNumber = lineNumberFromIndex(index, lineLengths);
 
     // Check for looped _name values
-    const loopNameMatch = blockBody.match(/(?<=^|\s)loop_\s+(_name)\s+([\sa-zA-Z0-9_'"]*?)(?=\s+_[a-zA-Z0-9.])/);
+    const loopNameMatch = blockBody.match(/(?<=^|\s)loop_\s+(_name)\s+([\sa-zA-Z0-9_'"-]*?)(?=\s+_[a-zA-Z0-9.-])/);
     if (loopNameMatch && loopNameMatch[1] == ('_name')) {
       // We're in a loop_ with _name lines
       let nameLines = loopNameMatch[2].replace(/\s+/g, '\n').replace(/['"]/g, '').split('\n');
@@ -189,7 +253,7 @@ function parseDDL1Dictionary(content: string, filePath: string): Tag[] {
         });
     } else {
       // Try to find a single _name outside of loop_
-      const singleNameMatch = blockBody.match(/(?<=^|\s)_name\s+([\sa-zA-Z0-9_'"]*?)(?=\s+_[a-zA-Z0-9.])/);
+      const singleNameMatch = blockBody.match(/(?<=^|\s)_name\s+([\sa-zA-Z0-9_'"-]*?)(?=\s+_[a-zA-Z0-9.-])/);
       if (singleNameMatch) {
         tags.push(new Tag(singleNameMatch[1].replace(/['"]/g, ''), blockBody, filePath, lineNumber));
       }
@@ -289,7 +353,7 @@ function loadDictionaries(paths: string[], reloadPath: string = "") {
         return;
       }
 
-      console.log(`Dictionary loaded, parsing file: ${dictPath}.`);
+      console.log(`Parsing file: ${dictPath}.`);
 
       // Normalize all line endings to \n to simplify regex
       data = data.replace(/\r\n?/g, '\n');
@@ -300,7 +364,7 @@ function loadDictionaries(paths: string[], reloadPath: string = "") {
 
       allTags.addTags(newTags);
 
-      console.log(`Loaded CIF dictionary: ${path.basename(dictPath)}`);
+      //console.log(`Loaded CIF dictionary: ${path.basename(dictPath)}`);
       remaining--;
 
       if(remaining == 0) {
@@ -312,29 +376,6 @@ function loadDictionaries(paths: string[], reloadPath: string = "") {
 
    console.log(`Loaded all dictionaries.`);
 }
-
-
-function consolidateDuplicates(alltags: Tag[]): Tag[] {
-  alltags.sort((tag1, tag2) => tag1.compareTo(tag2));
-
-  // Array to hold the consolidated tags
-  const consolidatedTags: Tag[] = [];
-
-  // Iterate through the sorted tags and combine duplicates
-  for (let i = 0; i < alltags.length; i++) {
-    const currentTag = alltags[i];
-
-    // If the last tag in the consolidatedTags array has the same name, combine them
-    if (consolidatedTags.length > 0 && consolidatedTags[consolidatedTags.length - 1].equals(currentTag)) {
-      consolidatedTags[consolidatedTags.length - 1] = consolidatedTags[consolidatedTags.length - 1].combine(currentTag);
-    } else {
-      // If no match, just add the tag to the array
-      consolidatedTags.push(currentTag);
-    }
-  }
-  return consolidatedTags;
-}
-
 
 
 /**
@@ -351,22 +392,22 @@ function watchDictionaryFiles() {
       new vscode.RelativePattern(path.dirname(dictPath), path.basename(dictPath))
     );
     watcher.onDidChange(() => {
-      console.log(`Dictionary file changed: ${dictPath}`);
+      //console.log(`Dictionary file changed: ${dictPath}`);
       loadDictionaries([],dictPath); // Reload just this file
     });
 
     watcher.onDidCreate(() => {
-      console.log(`Dictionary file created: ${dictPath}`);
+      //console.log(`Dictionary file created: ${dictPath}`);
       loadDictionaries([],dictPath);
     });
 
     watcher.onDidDelete(() => {
-      console.log(`Dictionary file deleted: ${dictPath}`);
+      //console.log(`Dictionary file deleted: ${dictPath}`);
       // Optionally remove data related to this file if needed
       loadDictionaries([],dictPath);
     });
 
-    console.log(`Watching file: ${dictPath}`);
+    //console.log(`Watching file: ${dictPath}`);
   });
 }
 
@@ -447,7 +488,7 @@ function downloadFile(url: string, directory: string, filename: string): Promise
 
       fileStream.on('finish', () => {
         fileStream.close();
-        console.log(`Downloaded and saved ${filename} to ${filePath}`);
+        //console.log(`Downloaded and saved ${filename} to ${filePath}`);
         resolve();
       });
 
@@ -534,7 +575,8 @@ export function activate(context: vscode.ExtensionContext) {
       if(saveframes.length > 1){
         saveframes.forEach((definition, index) => {
           const file = locations[index].uri.fsPath; // Access the second array using the same index
-          hoverText += `${file}\n${definition}\n\n---\n\n`;
+          hoverText += `${file}\n${definition}`;
+          if(index < locations.length - 1) { hoverText += "\n\n---\n\n"; }
         });
       } else {
         hoverText += saveframes[0];
@@ -572,7 +614,23 @@ export function activate(context: vscode.ExtensionContext) {
   // Add to subscriptions to handle cleanup on deactivation
   context.subscriptions.push(completionProvider);
 
-  console.log("End of activation.");
+
+
+
+    // Register the new command
+  let disposable = vscode.commands.registerCommand('cifTools.showAllTags', () => {
+      vscode.window.showInformationMessage('Check console for all tags.');
+      console.log('All Tags written to file.');
+      //console.log(allTags.toString()); // Display tags in console
+      fs.writeFileSync('C:/Users/User/Documents/github/cifvsc/debug-tag-output.txt', allTags.toString());
+  });
+  context.subscriptions.push(disposable); // Clean up when extension is deactivated
+
+
+
+
+
+  //console.log("End of activation.");
 }
 
 /**
