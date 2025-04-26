@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 
 import { loadDictionaries } from './dictionary-services';
-import { Tags } from '../models';
+import { Tags } from '@models';
 
 /**
  * Watch specific CIF dictionary files for changes, using paths from settings.

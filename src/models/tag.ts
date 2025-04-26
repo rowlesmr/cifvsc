@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { canonicalLowerCase } from '../utils';
+import { canonicalLowerCase } from '@utils';
 
 
 export class Tag {

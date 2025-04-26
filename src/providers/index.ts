@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { Tags } from '../models';
+import { Tags } from '@models';
 import { createHoverProvider } from './hover-provider';
 import { createDefinitionProvider } from './definition-provider';
 import { createCompletionProvider } from './completion-provider';

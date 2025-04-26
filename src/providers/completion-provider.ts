@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { Tags } from '../models';
+import { Tags } from '@models';
 
 
 export function provideCompletionItems(tags: Tags, document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken): vscode.CompletionItem[] {

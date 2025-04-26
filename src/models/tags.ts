@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { Tag } from './tag';
-import { canonicalLowerCase } from '../utils';
+import { canonicalLowerCase } from '@utils';
 
 export class Tags implements Iterable<Tag> {
     private m_tags: Map<string, Tag>;

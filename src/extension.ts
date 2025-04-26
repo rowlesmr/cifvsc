@@ -1,10 +1,9 @@
 import * as vscode from 'vscode';
-import * as fs from 'fs';
 
-import { Tags } from './models';
-import { loadDictionaries, watchDictionaryFiles, loadConfiguredOrDefaultDictionaries } from './services';
-import { registerProviders } from './providers';
-import { registerCommands } from './commands';
+import { Tags } from '@models';
+import { loadDictionaries, watchDictionaryFiles, loadConfiguredOrDefaultDictionaries } from '@services';
+import { registerProviders } from '@providers';
+import { registerCommands } from '@commands';
 
 let alreadyActivated = false;
 let allTags = new Tags;

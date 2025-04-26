@@ -1,5 +1,5 @@
-import { Tag } from "../models";
-import { lineNumberFromIndex, stringToLineLengths } from "../utils";
+import { Tag } from "@models";
+import { lineNumberFromIndex, stringToLineLengths } from "@utils";
 
 /**
  * Parses a single CIF DDL2 dictionary content into an array of Tags

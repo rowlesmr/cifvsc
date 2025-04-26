@@ -2,8 +2,8 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { parseDictionary } from '../parsers';
-import { Tags } from '../models';
+import { parseDictionary } from '@parsers';
+import { Tags } from '@models';
 
 /**
  * Loads multiple dictionary files, merges their tag -> saveframe mappings

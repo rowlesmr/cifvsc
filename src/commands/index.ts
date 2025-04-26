@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { Tags } from '../models';
+import { Tags } from '@models';
 import { registerShowAllTagsCommand } from './show-all-tags-command';
 
 /**

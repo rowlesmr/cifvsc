@@ -1,85 +1,88 @@
 {
-  "scripts": {
-    "compile": "tsc -p ./"
-  },
-  "name": "cifvsc",
-  "displayName": "CIF Syntax Support",
-  "publisher": "MatthewRowles",
-  "description": "Crystallographic Information File (CIF)",
-  "version": "0.1.2",
-  "icon": "icon.png",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/rowlesmr/cifvsc"
-  },
-  "engines": {
-    "vscode": "^1.99.0"
-  },
-  "categories": [
-    "Programming Languages"
-  ],
-  "files": [
-    "out",
-    "dictionaries",
-    "syntaxes",
-    "language-configuration.json",
-    "icon.png",
-    "README.md",
-    "LICENSE"
-  ],
-  "contributes": {
-    "commands": [
-      {
-        "command": "extension.hover",
-        "title": "Show Hover"
-      },
-      {
-        "command": "cifTools.showAllTags",
-        "title": "Show All Tags"
-      }
+    "scripts": {
+        "compile": "tsc -p ./",
+        "build": "tsc && tsc-alias",
+        "watch": "echo 'Watching for file changes...' && tsc -w"
+    },
+    "name": "cifvsc",
+    "displayName": "CIF Syntax Support",
+    "publisher": "MatthewRowles",
+    "description": "Crystallographic Information File (CIF)",
+    "version": "0.1.2",
+    "icon": "icon.png",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/rowlesmr/cifvsc"
+    },
+    "engines": {
+        "vscode": "^1.99.0"
+    },
+    "categories": [
+        "Programming Languages"
     ],
-    "languages": [
-      {
-        "id": "cif",
-        "aliases": [
-          "Crystallographic Information File",
-          "CIF"
-        ],
-        "extensions": [
-          ".cif",
-          ".dic"
-        ],
-        "configuration": "./language-configuration.json"
-      }
+    "files": [
+        "out",
+        "dictionaries",
+        "syntaxes",
+        "language-configuration.json",
+        "icon.png",
+        "README.md",
+        "LICENSE"
     ],
-    "grammars": [
-      {
-        "language": "cif",
-        "scopeName": "source.cif",
-        "path": "./syntaxes/cif.tmLanguage.json"
-      }
-    ]
-  },
-  "configuration": {
-    "title": "CIF Tools",
-    "properties": {
-      "cifTools.dictionaryPaths": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        },
-        "default": [],
-        "description": "List of paths to CIF dictionary files to load for tag definitions."
-      }
-    }
-  },
-  "devDependencies": {
-    "@types/node": "^22.14.1",
-    "@types/vscode": "^1.99.1",
-    "typescript": "^5.8.3"
-  },
-  "activationEvents": [
-    "onLanguage:cif"
-  ],
-  "main": "./out/extension.js"
+    "contributes": {
+        "commands": [
+            {
+                "command": "extension.hover",
+                "title": "Show Hover"
+            },
+            {
+                "command": "cifTools.showAllTags",
+                "title": "Show All Tags"
+            }
+        ],
+        "languages": [
+            {
+                "id": "cif",
+                "aliases": [
+                    "Crystallographic Information File",
+                    "CIF"
+                ],
+                "extensions": [
+                    ".cif",
+                    ".dic"
+                ],
+                "configuration": "./language-configuration.json"
+            }
+        ],
+        "grammars": [
+            {
+                "language": "cif",
+                "scopeName": "source.cif",
+                "path": "./syntaxes/cif.tmLanguage.json"
+            }
+        ]
+    },
+    "configuration": {
+        "title": "CIF Tools",
+        "properties": {
+            "cifTools.dictionaryPaths": {
+                "type": "array",
+                "items": {
+                    "type": "string"
+                },
+                "default": [],
+                "description": "List of paths to CIF dictionary files to load for tag definitions."
+            }
+        }
+    },
+    "devDependencies": {
+        "@types/node": "^22.14.1",
+        "@types/vscode": "^1.99.1",
+        "tsc-alias": "^1.8.15",
+        "typescript": "^5.8.3"
+    },
+    "activationEvents": [
+        "onLanguage:cif"
+    ],
+    "main": "./out/extension.js"
 }

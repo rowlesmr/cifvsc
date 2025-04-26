@@ -1,4 +1,4 @@
-import { Tag } from "../models";
+import { Tag } from "@models";
 import { parseDDL1Dictionary } from "./ddl1-parser";
 import { parseDDL2Dictionary } from "./ddl2-parser";
 import { parseDDLmDictionary } from "./ddlm-parser";

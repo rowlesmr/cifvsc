@@ -1,12 +1,24 @@
 {
     "compilerOptions": {
-      "target": "es6",
-      "module": "commonjs",
-      "lib": ["es6"],
-      "outDir": "out",
-      "rootDir": "src",
-      "strict": true,
-      "sourceMap": true
+        "target": "es6",
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "lib": ["es2015"],
+        "outDir": "out",
+        "rootDir": "src",
+        "strict": true,
+        "sourceMap": true,
+        "baseUrl": "./src",
+        "paths": {
+            "@commands": ["commands"],
+            "@models": ["models"],
+            "@parsers": ["parsers"],
+            "@providers": ["providers"],
+            "@services": ["services"],
+            "@utils": ["utils"]
+        },
+        "resolveJsonModule": true
     },
-    "exclude": ["node_modules", ".vscode-test"]
-  }
+    "include": ["src"],
+    "exclude": ["node_modules", ".vscode-test", "out"]
+}

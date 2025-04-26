@@ -1,5 +1,5 @@
-import { Tag } from "../models";
-import { lineNumberFromIndex, stringToLineLengths } from "../utils";
+import { Tag } from "@models";
+import { lineNumberFromIndex, stringToLineLengths } from "@utils";
 
 
 export function parseDDLmDictionary(content: string, filePath: string): Tag[] {

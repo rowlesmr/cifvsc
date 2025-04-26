@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
-import { Tags } from '../models';
+import { Tags } from '@models';
 
 /**
  * Command to show all tags and write them to a file.
